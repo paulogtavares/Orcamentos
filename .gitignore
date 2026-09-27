@@ -1,6 +1,11 @@
 # Dados locais (nunca versionar)
 data/
-config.json
-cache.json
+dados/
+.env
 node_modules/
+dist/
+dist-pacote/
+coverage/
+web/public/
+*.tsbuildinfo
 .DS_Store

@@ -1,17 +1,39 @@
 {
-  "name": "co-central-orcamentos",
-  "version": "1.2.1",
-  "buildDate": "2026-09-25",
-  "description": "C.O · Central de Orçamentos — Precificação de Projetos, Fullcommerce e Fulfillment",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "test": "node test.js"
-  },
+  "name": "orcamentos",
+  "version": "2.0.0-alpha.0",
+  "buildDate": "2026-09-27",
+  "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
+  "private": true,
+  "type": "module",
   "engines": {
-    "node": ">=16.0.0"
+    "node": "24.x"
   },
-  "keywords": ["orcamento", "precificacao", "fullcommerce", "fulfillment"],
-  "license": "MIT"
+  "workspaces": [
+    "compartilhado",
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p compartilhado --noEmit",
+    "lint": "eslint .",
+    "formatar": "prettier --write .",
+    "formatacao": "prettier --check ."
+  },
+  "dependencies": {
+    "plataforma-kit": "file:../plataforma-kit-1.2.0.tgz"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^24.19.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.2"
+  },
+  "license": "UNLICENSED"
 }

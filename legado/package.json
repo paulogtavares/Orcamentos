@@ -1,0 +1,8 @@
+{
+  "name": "orcamentos-legado",
+  "version": "1.2.1",
+  "buildDate": "2026-09-25",
+  "private": true,
+  "type": "commonjs",
+  "description": "Código da v1.2.1, mantido só como referência de paridade até a v2.0.0 final (não entra no pacote)"
+}

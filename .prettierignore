@@ -1,0 +1,6 @@
+legado/
+dist-pacote/
+**/public/
+coverage/
+package-lock.json
+*.md
