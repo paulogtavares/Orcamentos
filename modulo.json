@@ -1,0 +1,33 @@
+{
+  "id": "orcamentos",
+  "nome": "Orçamentos",
+  "descricao": "Precificação de Projetos, Fullcommerce e Fulfillment",
+  "prefixo": "/financeiro/orcamentos",
+  "saude": "/api/saude",
+  "menu": [
+    { "id": "orcamentos", "rotulo": "Orçamentos", "caminho": "/", "exigeAlguma": ["orcamentos.ver"] },
+    {
+      "id": "templates",
+      "rotulo": "Templates",
+      "caminho": "/templates",
+      "exigeAlguma": ["orcamentos.ver", "orcamentos.templates.gerenciar"]
+    },
+    {
+      "id": "servicos",
+      "rotulo": "Serviços",
+      "caminho": "/servicos",
+      "exigeAlguma": ["orcamentos.custos.ver", "orcamentos.custos.gerenciar"]
+    },
+    {
+      "id": "custos",
+      "rotulo": "Custos e parâmetros",
+      "caminho": "/custos",
+      "exigeAlguma": ["orcamentos.custos.ver", "orcamentos.custos.gerenciar"]
+    }
+  ],
+  "embutido": {
+    "iframe": "mesma-origem",
+    "eventos": ["rota-alterada", "sessao-expirada"],
+    "rotaAlterada": { "campos": ["tipo", "modulo", "caminho", "url", "titulo"] }
+  }
+}

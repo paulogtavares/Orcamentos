@@ -1,6 +1,6 @@
 {
   "name": "orcamentos",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0-alpha.3",
   "buildDate": "2026-09-27",
   "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
   "private": true,
@@ -14,6 +14,9 @@
     "web"
   ],
   "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env api/src/principal.ts",
+    "iniciar": "tsx --env-file-if-exists=.env api/src/principal.ts",
+    "importar": "tsx --env-file-if-exists=.env api/src/importar.ts",
     "test": "vitest run",
     "typecheck": "tsc -p compartilhado && tsc -p api",
     "lint": "eslint .",
