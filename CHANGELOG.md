@@ -1,49 +1,76 @@
 # Histórico de versões
 
+## v2.0.0 (em andamento) · equalização tecnológica
+
+Reescrita na stack padrão da plataforma (Node 24, TypeScript, Fastify 5, PostgreSQL, React 19),
+mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do documento
+"Plano de equalização tecnológica".
+
+### Atenção ao atualizar
+
+- **Login**: o login básico (`APP_USER` / `APP_PASS`) foi substituído pelo login da plataforma
+  (cookie `orc_sessao`). Se as variáveis existirem, o servidor avisa no log que foram ignoradas.
+  Crie o primeiro administrador com `ADMIN_EMAIL` e `ADMIN_SENHA`.
+- **Dados**: saem do `data/db.json` e vão para o schema `orcamentos` do PostgreSQL (nuvem) ou do
+  PGlite em `DADOS_DIR/banco` (local). No primeiro início, se houver `db.json` na pasta de dados,
+  ele é importado automaticamente e **não é alterado**. Guarde o `db.json` original até conferir os
+  valores. Também dá para importar à mão: `npm run importar -- caminho/db.json` (pode repetir, não duplica).
+- **`DATA_DIR`** virou **`DADOS_DIR`** (o nome antigo ainda funciona nesta versão, com aviso).
+- **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
+- **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
+
+### v2.0.0-alpha.4 · etapa 4 (servidor): login e permissões
+
+- Permissões `orcamentos.ver`, `.editar`, `.aprovar`, `.custos.ver`, `.custos.gerenciar`,
+  `.templates.gerenciar`, `.backup`, validadas em cada rota do servidor
+- Aprovar ou devolver um orçamento em aprovação exige `orcamentos.aprovar`
+- Sem `orcamentos.custos.ver`, a API não entrega custos, margens nem a política de preço: entrega o
+  preço de cada linha já calculado. Uma edição feita por quem não vê custos nunca altera os custos,
+  a margem nem o câmbio gravados
+- Histórico, aprovação e versões gravam o usuário logado
+- Primeiro administrador por `ADMIN_EMAIL` / `ADMIN_SENHA`; usuários de teste só com `MODO_TESTE=1`;
+  sem modo de teste, quem ainda entra com a senha de teste é bloqueado em produção
+- **Provisório**: tabelas de identidade em `db/00_identidade.provisorio.sql` até o kit 1.3.0
+
+### v2.0.0-alpha.3 · etapa 2: servidor
+
+- Fastify 5 com a base do kit: cabeçalhos de segurança, iframe só do mesmo domínio,
+  `/api/status`, `/api/saude`, `/modulo.json`, prefixo por `X-Forwarded-Prefix` ou `BASE_PATH`
+- Mesmas rotas da v1.2.1, validadas com zod, cada alteração numa transação
+- Sem `Access-Control-Allow-Origin: *`; a PTAX continua buscada pelo servidor
+- Teste de contrato: a mesma sequência de chamadas na v1.2.1 e na v2 produz os mesmos orçamentos
+
+### v2.0.0-alpha.2 · etapa 3: banco de dados
+
+- Schema `orcamentos` (nada em `public`), migrador do kit, `search_path = orcamentos, public`
+- Importador do `db.json` sem perda (campos desconhecidos guardados em `extras`) e reexecutável
+- Backup e restauração no mesmo formato JSON de antes; antes de restaurar, a base atual é guardada
+  em `copias_seguranca`; numeração dos orçamentos pela sequência do banco
+
+### v2.0.0-alpha.1 · etapa 1: cálculo
+
+- `compartilhado/calc.ts`: tradução fiel do `calc.js`, com os testes da planilha H Stern,
+  paridade exata com o original em 5.000 orçamentos e casos de borda
+- **Pendência de decisão**: com margem + imposto somando exatamente 100% (ex.: 70% + 30%), o
+  ponto flutuante gera um preço astronômico em vez de zero. Comportamento herdado da v1.2.1,
+  mantido e documentado em teste até decisão
+
+### v2.0.0-alpha.0 · etapa 0: marco inicial
+
+- Workspaces `api`, `web`, `compartilhado`; Node 24; ESLint e Prettier do kit; v1.2.1 em `legado/`
+
 ## v1.2.1 · 2026-09-25
 
-**Proposta**
-- A composição da squad não aparece mais na proposta: o cliente vê só **Squad Dev** com o total de horas e o valor, sem a lista de perfis (Project Manager, Technical Leader, Front-end Developer, Quality Assurance)
-- Dentro da plataforma (editor, CSV e histórico) o detalhamento por perfil continua disponível
+- A composição da squad não aparece mais na proposta (o cliente vê só **Squad Dev** com o total de horas e o valor)
 
 ## v1.2.0 · 2026-09-25
 
-**GP calculado em % das horas**
-- Novo modo de quantidade **% das horas** para itens por hora: as horas do item passam a ser um percentual da **soma das demais horas da mesma natureza** (setup com setup, mensal com mensal)
-- Alocação **Dedicado**, **Compartilhado** ou **Personalizado**. Os percentuais de Dedicado (padrão 25%) e Compartilhado (padrão 10%) ficam em *Custos e parâmetros → Regras de preço*
-- O GP acompanha automaticamente qualquer mudança nas demais horas; a tela mostra o cálculo (ex.: “= 127,5 h de 510 h”)
-- Horas calculadas são arredondadas a 0,1 h
-- Itens em % das horas não entram na base (sem cálculo circular)
-- Ao voltar de % das horas para Horas, o item mantém as horas que estavam calculadas
-- **Atualizar custos** também reaplica os percentuais vigentes de Dedicado e Compartilhado
-- Templates aceitam GP em % das horas
-  - *Fast Template Lume – Filial*: GP personalizado de 24,71% (= 126 h sobre 510 h, o mesmo valor da planilha)
-  - *Fullcommerce – Loja completa*: GP dedicado
-  - *Fulfillment*: GP continua em horas fixas (o setup não tem outras horas por perfil para servir de base)
-
-**Banco de dados**
-- Bancos da v1.1.0 recebem os percentuais padrão de GP automaticamente ao iniciar. Templates já existentes não são alterados
+- GP calculado em % das horas (Dedicado, Compartilhado ou Personalizado)
 
 ## v1.1.0 · 2026-09-25
 
-**Novo layout, no padrão da plataforma Cronogramas**
-- Tema claro com fonte Figtree, barra superior escura e símbolo de três barras (Setup, Mensal e Variável)
-- Sem menu lateral: página única com abas **Orçamentos**, **Templates**, **Serviços** e **Custos e parâmetros**, cada uma com contador
-- Faixa de resumo na lista (em aberto, aceitos, margem média, aguardando aprovação, conversão) e filtro de status em botões segmentados
-- Tela do orçamento no formato da tela de cronograma: título com selos, métricas à direita (setup, mensalidade, contrato, margem real), barra de ferramentas com legenda de cores
-- Grupos Setup / Mensal / Variável recolhíveis na tabela de itens
-- Histórico e versões em painel lateral
-- Novo orçamento com opções em cartão (a partir de template ou em branco)
-- Confirmações e justificativas em janelas próprias, no lugar das caixas do navegador
-- Avisos na base da tela, centralizados
-- Proposta em tela própria, no padrão do PDF do Cronogramas
-- Modo escuro automático (segue o sistema) e opção de alternar em Configurações
-- No celular, a lista de orçamentos vira cartões
-
-**Alterado**
-- Porta padrão agora é **3333** (3131 é do C.P e 3232 do Cronogramas: os três rodam juntos)
-- Nome exibido: **Orçamentos**
+- Novo layout no padrão da plataforma Cronogramas
 
 ## v1.0.0 · 2026-09-25
 
-- Primeira versão: tabela de custos, catálogo de serviços, templates, orçamentos com natureza Setup / Mensal / Variável, margem real ou markup, impostos, contingência, fee sobre GMV, valor total do contrato, fluxo de aprovação com margem mínima, versões congeladas, proposta sem custos, PTAX do Banco Central, backup e restauração
+- Primeira versão

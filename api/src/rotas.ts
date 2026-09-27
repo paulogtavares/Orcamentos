@@ -5,7 +5,8 @@
  *   - cada alteração roda numa transação, com o usuário logado informado ao banco.
  */
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { ErroApi, naoEncontrado } from "plataforma-kit/erros";
+import { ErroApi, naoEncontrado, proibido } from "plataforma-kit/erros";
+import { pode } from "plataforma-kit/permissoes";
 import type { Conexao, Consulta } from "./banco.js";
 import { exportarBase, importarBase, validarBase } from "./dados/importador.js";
 import {
@@ -28,9 +29,10 @@ import {
 } from "./dados/repositorio.js";
 import type { Json, Orcamento, Parametros } from "./dados/tipos.js";
 import * as D from "./dominio.js";
-import type { Usuario } from "./permissoes.js";
+import type { Permissao, Usuario } from "./permissoes.js";
 import { buscarPtax } from "./ptax.js";
 import * as V from "./validacao.js";
+import { paraUsuario, protegerCustos } from "./visibilidade.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -46,6 +48,17 @@ export interface OpcoesRotas {
 }
 
 const usuarioDe = (req: FastifyRequest) => req.usuario!;
+
+/** preHandler: exige ao menos uma das permissões (administrador tem todas). Validado no servidor. */
+const exigir =
+  (...chaves: Permissao[]) =>
+  async (req: FastifyRequest) => {
+    if (!chaves.some((c) => pode(req.usuario, c))) throw proibido();
+  };
+const P = (...chaves: Permissao[]) => ({ preHandler: exigir(...chaves) });
+
+/** Transições que são decisão de aprovação (as demais são edição). */
+const TRANSICOES_DE_APROVACAO = new Set(["em_aprovacao>aprovado", "em_aprovacao>rascunho"]);
 const nomeDe = (req: FastifyRequest) => req.usuario?.nome || req.usuario?.email || "";
 
 export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
@@ -64,9 +77,9 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
 
   // ------------------------------------------------------------ tudo de uma vez e parâmetros
 
-  app.get("/api/db", async () => exportarBase(consultar));
+  app.get("/api/db", P("orcamentos.ver"), async (req) => paraUsuario(req.usuario, await exportarBase(consultar), "db"));
 
-  app.put("/api/settings", async (req) => {
+  app.put("/api/settings", P("orcamentos.custos.gerenciar"), async (req) => {
     const b = V.settings.parse(req.body);
     return emTx(req, async (q) => {
       const atual = await lerParametros(q);
@@ -78,7 +91,7 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     });
   });
 
-  app.post("/api/cambio/ptax", async (req) => {
+  app.post("/api/cambio/ptax", P("orcamentos.custos.gerenciar"), async (req) => {
     let r: Awaited<ReturnType<typeof buscarPtax>>;
     try {
       r = await (o.ptax ?? buscarPtax)();
@@ -93,15 +106,15 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
 
   // ------------------------------------------------------------ papéis de custo (/api/perfis)
 
-  app.get("/api/perfis", async () => listarPapeis(consultar));
-  app.get("/api/perfis/:id", async (req) => (await lerPapel(consultar, id(req))) ?? null);
-  app.post("/api/perfis", async (req, reply) => {
+  app.get("/api/perfis", P("orcamentos.custos.ver"), async () => listarPapeis(consultar));
+  app.get("/api/perfis/:id", P("orcamentos.custos.ver"), async (req) => (await lerPapel(consultar, id(req))) ?? null);
+  app.post("/api/perfis", P("orcamentos.custos.gerenciar"), async (req, reply) => {
     const b = V.papel.parse({ categoria: "Geral", moeda: "BRL", custoHora: 0, ativo: true, ...(req.body as Json) });
     const novo = { ...b, id: D.novoId("pf") };
     await emTx(req, (q) => gravarPapel(q, novo));
     return reply.code(201).send(await lerPapel(consultar, novo.id));
   });
-  app.put("/api/perfis/:id", async (req) => {
+  app.put("/api/perfis/:id", P("orcamentos.custos.gerenciar"), async (req) => {
     const b = V.papel.partial().parse(req.body);
     return emTx(req, async (q) => {
       const atual = await lerPapel(q, id(req));
@@ -110,7 +123,7 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
       return lerPapel(q, atual.id);
     });
   });
-  app.delete("/api/perfis/:id", async (req) =>
+  app.delete("/api/perfis/:id", P("orcamentos.custos.gerenciar"), async (req) =>
     emTx(req, async (q) => {
       if (!(await lerPapel(q, id(req)))) throw naoEncontrado();
       const uso = await q<{ n: number }>("SELECT count(*)::int AS n FROM servicos WHERE papel_id = $1", [id(req)]);
@@ -130,9 +143,14 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     }
   }
 
-  app.get("/api/servicos", async () => listarServicos(consultar));
-  app.get("/api/servicos/:id", async (req) => (await lerServico(consultar, id(req))) ?? null);
-  app.post("/api/servicos", async (req, reply) => {
+  app.get("/api/servicos", P("orcamentos.ver"), async (req) =>
+    paraUsuario(req.usuario, await listarServicos(consultar), "servicos"),
+  );
+  app.get("/api/servicos/:id", P("orcamentos.ver"), async (req) => {
+    const sv = await lerServico(consultar, id(req));
+    return sv ? paraUsuario(req.usuario, [sv], "servicos")[0] : null;
+  });
+  app.post("/api/servicos", P("orcamentos.custos.gerenciar"), async (req, reply) => {
     const b = V.servico.partial().required({ nome: true, tipoCobranca: true, natureza: true }).parse(req.body);
     const novo = { area: "Geral", grupo: "", ...b, id: D.novoId("sv") };
     await emTx(req, async (q) => {
@@ -141,7 +159,7 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     });
     return reply.code(201).send(await lerServico(consultar, novo.id));
   });
-  app.put("/api/servicos/:id", async (req) => {
+  app.put("/api/servicos/:id", P("orcamentos.custos.gerenciar"), async (req) => {
     const b = V.servico.partial().parse(req.body);
     return emTx(req, async (q) => {
       const atual = await lerServico(q, id(req));
@@ -152,7 +170,7 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
       return lerServico(q, atual.id);
     });
   });
-  app.delete("/api/servicos/:id", async (req) =>
+  app.delete("/api/servicos/:id", P("orcamentos.custos.gerenciar"), async (req) =>
     emTx(req, async (q) => {
       if (!(await lerServico(q, id(req)))) throw naoEncontrado();
       const uso = await q<{ n: number }>("SELECT count(*)::int AS n FROM template_itens WHERE servico_id = $1", [
@@ -167,15 +185,15 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
 
   // ------------------------------------------------------------ templates
 
-  app.get("/api/templates", async () => listarTemplates(consultar));
-  app.get("/api/templates/:id", async (req) => (await lerTemplate(consultar, id(req))) ?? null);
-  app.post("/api/templates", async (req, reply) => {
+  app.get("/api/templates", P("orcamentos.ver"), async () => listarTemplates(consultar));
+  app.get("/api/templates/:id", P("orcamentos.ver"), async (req) => (await lerTemplate(consultar, id(req))) ?? null);
+  app.post("/api/templates", P("orcamentos.templates.gerenciar"), async (req, reply) => {
     const b = V.template.partial().required({ nome: true }).parse(req.body);
     const novo = { modelo: "projeto", descricao: "", params: {}, itens: [], ...b, id: D.novoId("tp") };
     await emTx(req, (q) => gravarTemplate(q, novo));
     return reply.code(201).send(await lerTemplate(consultar, novo.id));
   });
-  app.put("/api/templates/:id", async (req) => {
+  app.put("/api/templates/:id", P("orcamentos.templates.gerenciar"), async (req) => {
     const b = V.template.partial().parse(req.body);
     return emTx(req, async (q) => {
       const atual = await lerTemplate(q, id(req));
@@ -184,7 +202,7 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
       return lerTemplate(q, atual.id);
     });
   });
-  app.delete("/api/templates/:id", async (req) =>
+  app.delete("/api/templates/:id", P("orcamentos.templates.gerenciar"), async (req) =>
     emTx(req, async (q) => {
       const r = await q("DELETE FROM templates WHERE id = $1", [id(req)]);
       if (!r.rowCount) throw naoEncontrado();
@@ -194,9 +212,11 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
 
   // ------------------------------------------------------------ orçamentos
 
-  app.get("/api/orcamentos", async () => listarOrcamentos(consultar));
+  app.get("/api/orcamentos", P("orcamentos.ver"), async (req) =>
+    paraUsuario(req.usuario, await listarOrcamentos(consultar), "orcamentos"),
+  );
 
-  app.post("/api/orcamentos", async (req, reply) => {
+  app.post("/api/orcamentos", P("orcamentos.editar"), async (req, reply) => {
     const b = V.novoOrcamento.parse(req.body);
     const orc = await emTx(req, async (q) => {
       const ctx = await contexto(q);
@@ -206,13 +226,13 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
       return orc;
     });
     o.log(`[orc] ${orc.numero} criado`);
-    return reply.code(201).send(await lerOrcamento(consultar, orc.id));
+    return reply.code(201).send(paraUsuario(req.usuario, await lerOrcamento(consultar, orc.id), "orcamento"));
   });
 
-  app.get("/api/orcamentos/:id", async (req) => {
+  app.get("/api/orcamentos/:id", P("orcamentos.ver"), async (req) => {
     const orc = await lerOrcamento(consultar, id(req));
     if (!orc) throw naoEncontrado("Orçamento");
-    return orc;
+    return paraUsuario(req.usuario, orc, "orcamento");
   });
 
   /** Lê o orçamento travado para alteração, aplica a regra e grava, tudo na mesma transação. */
@@ -222,22 +242,22 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
       if (!orc) throw naoEncontrado("Orçamento");
       const novo = await regra(q, orc);
       await gravarOrcamento(q, novo, { usuarioId: usuarioDe(req).id });
-      return lerOrcamento(q, novo.id);
+      return paraUsuario(req.usuario, await lerOrcamento(q, novo.id), "orcamento");
     });
 
-  app.put("/api/orcamentos/:id", async (req) => {
+  app.put("/api/orcamentos/:id", P("orcamentos.editar"), async (req) => {
     const b = V.edicaoOrcamento.parse(req.body);
-    return alterar(req, (_q, orc) => D.editar(orc, b, nomeDe(req)));
+    return alterar(req, (_q, orc) => D.editar(orc, protegerCustos(req.usuario, orc, b), nomeDe(req)));
   });
 
-  app.delete("/api/orcamentos/:id", async (req) =>
+  app.delete("/api/orcamentos/:id", P("orcamentos.editar"), async (req) =>
     emTx(req, async (q) => {
       if (!(await excluirOrcamento(q, id(req)))) throw naoEncontrado("Orçamento");
       return { ok: true };
     }),
   );
 
-  app.post("/api/orcamentos/:id/item", async (req) => {
+  app.post("/api/orcamentos/:id/item", P("orcamentos.editar"), async (req) => {
     const b = V.novoItem.parse(req.body);
     return alterar(req, async (q, orc) => {
       D.exigirEditavel(orc);
@@ -247,18 +267,30 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     });
   });
 
-  app.post("/api/orcamentos/:id/atualizar-custos", async (req) =>
+  app.post("/api/orcamentos/:id/atualizar-custos", P("orcamentos.editar"), async (req) =>
     alterar(req, async (q, orc) => D.atualizarCustos(await contexto(q), orc, await listarServicos(q), nomeDe(req))),
   );
 
-  app.post("/api/orcamentos/:id/status", async (req) => {
+  app.post("/api/orcamentos/:id/status", P("orcamentos.editar", "orcamentos.aprovar"), async (req) => {
     const b = V.mudancaStatus.parse(req.body);
-    return alterar(req, async (q, orc) => D.mudarStatus(await contexto(q), orc, b.status, b.comentario, nomeDe(req)));
+    return alterar(req, async (q, orc) => {
+      // aprovar ou devolver exige orcamentos.aprovar; as demais transições, orcamentos.editar
+      const chave = TRANSICOES_DE_APROVACAO.has(`${orc.status}>${b.status}`)
+        ? "orcamentos.aprovar"
+        : "orcamentos.editar";
+      if (!pode(req.usuario, chave))
+        throw proibido(
+          chave === "orcamentos.aprovar" ? "Só quem aprova orçamentos pode aprovar ou devolver." : undefined,
+        );
+      return D.mudarStatus(await contexto(q), orc, b.status, b.comentario, nomeDe(req));
+    });
   });
 
-  app.post("/api/orcamentos/:id/versao", async (req) => alterar(req, (_q, orc) => D.salvarVersao(orc, nomeDe(req))));
+  app.post("/api/orcamentos/:id/versao", P("orcamentos.editar"), async (req) =>
+    alterar(req, (_q, orc) => D.salvarVersao(orc, nomeDe(req))),
+  );
 
-  app.post("/api/orcamentos/:id/duplicar", async (req, reply) => {
+  app.post("/api/orcamentos/:id/duplicar", P("orcamentos.editar"), async (req, reply) => {
     const copia = await emTx(req, async (q) => {
       const orc = await lerOrcamento(q, id(req));
       if (!orc) throw naoEncontrado("Orçamento");
@@ -266,19 +298,19 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
       await gravarOrcamento(q, c, { usuarioId: usuarioDe(req).id });
       return c;
     });
-    return reply.code(201).send(await lerOrcamento(consultar, copia.id));
+    return reply.code(201).send(paraUsuario(req.usuario, await lerOrcamento(consultar, copia.id), "orcamento"));
   });
 
   // ------------------------------------------------------------ backup e restauração
 
-  app.get("/api/backup", async (_req, reply) => {
+  app.get("/api/backup", P("orcamentos.backup"), async (_req, reply) => {
     const dia = new Date().toISOString().slice(0, 10);
     reply.header("Content-Disposition", `attachment; filename="orcamentos-backup-${dia}.json"`);
     reply.header("Content-Type", "application/json; charset=utf-8");
     return JSON.stringify(await exportarBase(consultar), null, 2);
   });
 
-  app.post("/api/restore", { bodyLimit: 50 * 1024 * 1024 }, async (req) => {
+  app.post("/api/restore", { bodyLimit: 50 * 1024 * 1024, ...P("orcamentos.backup") }, async (req) => {
     const base = validarBase(req.body);
     await emTx(req, async (q) => {
       // cópia da base atual antes de trocar (na v1: data/db-antes-restore-<data>.json)

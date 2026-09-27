@@ -9,6 +9,7 @@ import { lerAmbienteOrcamentos } from "./ambiente.js";
 import { abrirBanco } from "./banco.js";
 import { cargaInicial } from "./dados/importador.js";
 import { prepararBanco } from "./migracoes.js";
+import { prepararPessoas } from "./pessoas.js";
 import { criarServidor, lerManifesto } from "./servidor.js";
 import { lerVersao } from "./versao.js";
 
@@ -28,6 +29,13 @@ async function iniciar() {
   const { aplicados } = await prepararBanco(conexao, log);
   if (aplicados.length) log(`[db] aplicado: ${aplicados.join(", ")}`);
   await cargaInicial(conexao, { dadosDir, log });
+  const acessoTeste = await prepararPessoas(conexao.banco, {
+    modoTeste: amb.modoTeste,
+    producao: amb.producao,
+    adminEmail: process.env.ADMIN_EMAIL,
+    adminSenha: process.env.ADMIN_SENHA,
+    log,
+  });
 
   const pastaFront = [raiz, join(raiz, "web", "dist")].find((p) => existsSync(join(p, "public", "index.html")));
   const app = await criarServidor({
@@ -37,6 +45,7 @@ async function iniciar() {
     data,
     pastaFront,
     manifesto: lerManifesto(join(raiz, "modulo.json")),
+    acessoTeste,
     log,
   });
 
