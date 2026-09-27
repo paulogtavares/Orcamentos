@@ -1,0 +1,1121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orçamentos</title>
+<meta name="description" content="Plataforma de orçamentos de Projetos, Fullcommerce e Fulfillment">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3' y='6' width='16' height='5' rx='2' fill='%232F6BDB'/><rect x='10' y='14' width='18' height='5' rx='2' fill='%2313968A'/><rect x='6' y='22' width='12' height='5' rx='2' fill='%23E08A00'/></svg>">
+<script src="/calc.js"></script>
+<style>
+/* ══ Tokens — mesmos da plataforma Cronogramas ══ */
+:root{--papel:#f3f5f8;--superficie:#ffffff;--superficie-2:#f8f9fb;--tinta:#18202e;--grafite:#535c6e;--apagado:#8a93a5;--linha:#e3e7ee;--linha-forte:#cdd3dd;--selecao:#eaf0fb;
+  --setup:#2f6bdb;--mensal:#13968a;--variavel:#e08a00;--roxo:#7c5cd6;--atraso:#cf3a3a;--ok:#1f8a53;--alerta-bg:#fff7e8;--alerta-borda:#f1dfb8;--alerta-tx:#7a5208;
+  --raio:6px;--sombra:0 1px 2px rgba(24,32,46,.06),0 8px 24px rgba(24,32,46,.08);--fonte:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--papel:#0f141c;--superficie:#161c26;--superficie-2:#1b2230;--tinta:#e6e9ef;--grafite:#a6afbf;--apagado:#768093;--linha:#262f3f;--linha-forte:#364158;--selecao:#1d2b45;
+  --setup:#5b8cf0;--mensal:#2bb3a2;--variavel:#eea02c;--roxo:#9b82ea;--atraso:#f06464;--ok:#45c083;--alerta-bg:#2e2512;--alerta-borda:#4d3d1a;--alerta-tx:#f0cf8a;--sombra:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.4)}}
+:root[data-theme=dark]{color-scheme:dark;--papel:#0f141c;--superficie:#161c26;--superficie-2:#1b2230;--tinta:#e6e9ef;--grafite:#a6afbf;--apagado:#768093;--linha:#262f3f;--linha-forte:#364158;--selecao:#1d2b45;
+  --setup:#5b8cf0;--mensal:#2bb3a2;--variavel:#eea02c;--roxo:#9b82ea;--atraso:#f06464;--ok:#45c083;--alerta-bg:#2e2512;--alerta-borda:#4d3d1a;--alerta-tx:#f0cf8a;--sombra:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.4)}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--papel);font-family:var(--fonte);font-size:14px;line-height:1.45;color:var(--tinta);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--setup);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+
+/* ══ Topo ══ */
+.topo{display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;padding-top:env(safe-area-inset-top,0);flex:none;background:#18202e;color:#fff;position:sticky;top:0;z-index:40}
+:root:not([data-theme=light]) .topo{background:#18202e}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .topo{background:#0a0e14;border-bottom:1px solid var(--linha)}}
+.marca{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;text-decoration:none;letter-spacing:-.01em;color:#fff}
+.marca-simbolo{display:flex;flex-direction:column;gap:3px}
+.marca-simbolo i{display:block;height:4px;border-radius:2px}
+.versao-app{margin-left:12px;font-size:12px;color:#aeb6c4;font-variant-numeric:tabular-nums;white-space:nowrap}
+.topo-esquerda,.topo-direita{display:flex;align-items:center;gap:12px}
+.botao-topo{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:var(--raio);border:1px solid rgba(255,255,255,.18);background:#ffffff0f;color:#fff;cursor:pointer;font-size:13px}
+.botao-topo:hover{background:#ffffff24}
+.botao-topo small{color:#aeb6c4}
+
+/* ══ Menus ══ */
+.menu-ancora{position:relative}
+.menu-lista{position:absolute;right:0;top:calc(100% + 6px);z-index:50;min-width:250px;padding:5px;background:var(--superficie);border:1px solid var(--linha);border-radius:8px;box-shadow:var(--sombra);color:var(--tinta)}
+.menu-lista button,.menu-lista a,.menu-lista label{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;background:none;padding:7px 10px;border-radius:5px;cursor:pointer;font-size:13px;text-decoration:none;color:inherit}
+.menu-lista button:hover:not(:disabled),.menu-lista a:hover,.menu-lista label:hover{background:var(--papel)}
+.menu-lista button:disabled{color:var(--apagado);cursor:default}
+.menu-lista .perigo{color:var(--atraso)}
+.menu-lista hr{border:none;border-top:1px solid var(--linha);margin:4px 2px}
+.menu-cabecalho{display:flex;flex-direction:column;padding:6px 10px 4px;font-size:12.5px;color:var(--grafite)}
+.menu-cabecalho strong{color:var(--tinta);font-size:13.5px}
+
+/* ══ Página ══ */
+#app{flex:1;display:flex;flex-direction:column;min-height:0}
+.pagina{padding:28px 32px 48px;max-width:1320px;width:100%;margin:0 auto}
+.cabecalho-pagina{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.titulo-pagina{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2}
+.linha-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.abas{display:flex;gap:4px;border-bottom:1px solid var(--linha);overflow-x:auto}
+.abas button{border:none;background:none;padding:8px 12px;cursor:pointer;color:var(--grafite);font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.abas button[aria-selected=true]{color:var(--tinta);border-bottom-color:var(--tinta)}
+.abas .contador{color:var(--apagado);font-weight:500;margin-left:6px}
+.barra-abas{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.barra-abas .abas{flex:1;min-width:0}
+.barra-lista{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.busca{position:relative;display:flex;align-items:center;width:320px;max-width:100%}
+.busca svg{position:absolute;left:10px;color:var(--apagado)}
+.busca input{padding-left:32px!important}
+.texto-apoio{color:var(--grafite);font-size:13.5px;margin:0}
+
+/* ══ Botões ══ */
+.botao{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:var(--raio);border:1px solid var(--linha-forte);background:var(--superficie);cursor:pointer;font-weight:500;white-space:nowrap;text-decoration:none;color:var(--tinta)}
+.botao:hover:not(:disabled){background:var(--superficie-2);border-color:var(--apagado)}
+.botao:disabled{opacity:.5;cursor:default}
+.botao-primario{background:var(--tinta);border-color:var(--tinta);color:var(--papel)}
+.botao-primario:hover:not(:disabled){background:#2a3447;border-color:#2a3447;color:#fff}
+.botao-perigo{background:var(--atraso);border-color:var(--atraso);color:#fff}
+.botao-perigo-texto{border-color:transparent;color:var(--atraso);background:none}
+.botao-pequeno{height:30px;padding:0 10px;font-size:13px}
+.botao-icone{display:inline-grid;place-items:center;width:28px;height:28px;padding:0;border:none;background:none;border-radius:var(--raio);cursor:pointer;color:var(--grafite)}
+.botao-icone:hover:not(:disabled){background:var(--papel);color:var(--tinta)}
+.botao-icone:disabled{opacity:.35;cursor:default}
+.segmentado{display:inline-flex;border:1px solid var(--linha-forte);border-radius:var(--raio);overflow:hidden;background:var(--superficie);flex-wrap:wrap}
+.segmentado button{border:none;background:none;height:30px;padding:0 11px;cursor:pointer;font-size:13px;color:var(--grafite);border-right:1px solid var(--linha)}
+.segmentado button:last-child{border-right:none}
+.segmentado button[aria-pressed=true]{background:var(--tinta);color:var(--papel);font-weight:600}
+.separador{width:1px;height:22px;background:var(--linha-forte);margin:0 4px}
+
+/* ══ Campos ══ */
+.campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.rotulo-campo{font-size:13px;font-weight:600;color:var(--grafite)}
+.dica-campo{font-size:12px;color:var(--apagado);margin:0}
+.entrada,select.entrada,textarea.entrada{height:34px;padding:0 10px;border:1px solid var(--linha-forte);border-radius:var(--raio);background:var(--superficie);width:100%;outline:none}
+textarea.entrada{height:auto;padding:8px 10px;resize:vertical}
+.entrada:focus{border-color:var(--setup);box-shadow:0 0 0 3px color-mix(in srgb,var(--setup) 18%,transparent)}
+.entrada:disabled{background:var(--superficie-2);color:var(--grafite)}
+.entrada.num{text-align:right}
+.celula{height:28px;padding:0 6px;border:1px solid transparent;border-radius:4px;background:transparent;width:100%;outline:none;text-align:right;font-variant-numeric:tabular-nums}
+.celula:hover:not(:disabled){border-color:var(--linha-forte)}
+.celula:focus{border-color:var(--setup);background:var(--superficie)}
+select.celula{text-align:left;padding-right:2px;width:auto}
+.grade-campos{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px 14px}
+
+/* ══ Tabelas ══ */
+.tabela{background:var(--superficie);border:1px solid var(--linha);border-radius:10px;overflow:hidden}
+.rolagem{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;background:var(--superficie-2);font-size:12px;font-weight:600;color:var(--grafite);padding:9px 14px;border-bottom:1px solid var(--linha);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--linha);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tr.clicavel{cursor:pointer}
+tr.clicavel:hover td{background:var(--superficie-2)}
+.dir{text-align:right}
+.valor{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.forte{font-weight:600}
+.secundario{color:var(--grafite);font-size:12.5px}
+tr.nivel-1 td{background:var(--superficie-2);font-weight:700}
+tr.nivel-1 td .secundario{font-weight:400}
+.tabela-itens td{padding:5px 8px}
+.tabela-itens th{padding:9px 8px}
+.tabela-itens td:first-child,.tabela-itens th:first-child{padding-left:14px}
+.chevron{display:inline-grid;place-items:center;width:18px;transition:transform .15s;color:var(--grafite)}
+.recolhido .chevron{transform:rotate(-90deg)}
+
+/* ══ Selos, status, chips ══ */
+.selo{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--papel);color:var(--grafite);white-space:nowrap}
+.selo-rascunho{background:#f1f2f4;color:#535c6e}
+.selo-em_aprovacao{background:#fff3df;color:#99600a}
+.selo-aprovado{background:#e6f5f3;color:#0f766e}
+.selo-enviado{background:#e8effc;color:#2456b8}
+.selo-aceito{background:#e6f4ec;color:#1f8a53}
+.selo-perdido{background:#fdf1f1;color:#cf3a3a}
+.selo-codigo{background:#efeafc;color:#5b3fb8}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .selo-rascunho{background:#232b39;color:#a6afbf}:root:not([data-theme=light]) .selo-em_aprovacao{background:#3a2c12;color:#f0c26b}:root:not([data-theme=light]) .selo-aprovado{background:#10302c;color:#5fd0c0}:root:not([data-theme=light]) .selo-enviado{background:#1c2c4a;color:#8fb0f5}:root:not([data-theme=light]) .selo-aceito{background:#173427;color:#6fd3a0}:root:not([data-theme=light]) .selo-perdido{background:#2e1616;color:#f08a8a}:root:not([data-theme=light]) .selo-codigo{background:#2a2345;color:#b9a6f3}}
+.chip-nat{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--cor);white-space:nowrap}
+.chip-nat i{width:8px;height:8px;border-radius:2px;background:var(--cor)}
+.etiqueta{display:inline-block;font-size:11px;padding:0 6px;border-radius:4px;background:var(--papel);color:var(--grafite);white-space:nowrap}
+.legenda{display:flex;gap:10px;font-size:12px;color:var(--grafite);flex-wrap:wrap}
+.legenda span{display:inline-flex;align-items:center;gap:5px}
+.legenda i{width:14px;height:8px;border-radius:2px}
+.barra-progresso{display:inline-block;width:72px;height:6px;border-radius:3px;background:var(--linha);overflow:hidden;flex:none;position:relative}
+.barra-progresso.larga{width:120px}
+.barra-progresso i{display:block;height:100%;background:var(--tinta);border-radius:3px}
+.barra-progresso b{position:absolute;top:-2px;width:2px;height:10px;background:var(--grafite)}
+.atraso{color:var(--atraso)}.ok{color:var(--ok)}
+
+/* ══ Métricas (resumo da lista e cabeçalho do orçamento) ══ */
+.metricas{display:flex;gap:16px 32px;flex-wrap:wrap}
+.metrica{display:flex;flex-direction:column;gap:2px;min-width:0}
+.metrica .rotulo{font-size:13px;font-weight:600;color:var(--grafite)}
+.metrica .v{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.metrica .v small{font-size:13px;font-weight:500;color:var(--grafite)}
+.faixa-resumo{background:var(--superficie);border:1px solid var(--linha);border-radius:10px;padding:14px 20px;margin-bottom:16px}
+
+/* ══ Editor ══ */
+.cabecalho-projeto{display:flex;align-items:flex-start;gap:16px 28px;flex-wrap:wrap;padding:16px 20px 14px;background:var(--superficie);border-bottom:1px solid var(--linha)}
+.titulo-projeto{display:flex;gap:12px;align-items:flex-start;flex:1;min-width:260px}
+.titulo-projeto h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em;line-height:1.2}
+.titulo-projeto p{margin:4px 0 0;color:var(--grafite);font-size:13.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lado-projeto{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.barra-ferramentas{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 20px;background:var(--superficie);border-bottom:1px solid var(--linha)}
+.barra-ferramentas .espaco{flex:1}
+.corpo-editor{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:16px 20px 48px;align-items:start}
+.cartao{background:var(--superficie);border:1px solid var(--linha);border-radius:10px;margin-bottom:16px}
+.cartao-cabecalho{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--linha)}
+.cartao-cabecalho h2{margin:0;font-size:15px;font-weight:700;flex:1}
+.cartao-corpo{padding:14px 16px}
+.lateral{position:static}
+.linha-resumo{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13.5px}
+.linha-resumo span:first-child{color:var(--grafite)}
+.linha-resumo span:last-child{font-variant-numeric:tabular-nums}
+.linha-resumo.total{border-top:1px solid var(--linha);margin-top:6px;padding-top:10px;font-weight:700}
+.linha-resumo.total span:first-child{color:var(--tinta)}
+.aviso-bloco{margin:0 0 12px;padding:10px 14px;border-radius:var(--raio);background:var(--alerta-bg);border:1px solid var(--alerta-borda);color:var(--alerta-tx);font-size:13px}
+.erro-bloco{margin:0 0 12px;color:var(--atraso);background:color-mix(in srgb,var(--atraso) 8%,var(--superficie));border:1px solid color-mix(in srgb,var(--atraso) 25%,var(--superficie));padding:10px 14px;border-radius:var(--raio);font-size:13px}
+.info-bloco{margin:0 0 12px;padding:10px 14px;border-radius:var(--raio);background:var(--selecao);color:var(--tinta);font-size:13px}
+.salvando{font-size:12px;color:#aeb6c4}
+.vazio{padding:48px 24px;text-align:center;color:var(--grafite);background:var(--superficie);border:1px dashed var(--linha-forte);border-radius:10px}
+.vazio strong{display:block;color:var(--tinta);font-size:15px;margin-bottom:4px}
+.vazio p{margin:0 0 14px}
+.tabela .vazio{border:none;border-radius:0}
+
+/* ══ Painel lateral (histórico) ══ */
+.painel{position:fixed;top:52px;right:0;bottom:0;width:440px;max-width:100%;z-index:30;background:var(--superficie);border-left:1px solid var(--linha);box-shadow:-8px 0 32px #18202e1a;display:flex;flex-direction:column;animation:entrar .16s ease-out}
+@keyframes entrar{from{transform:translateX(24px);opacity:0}}
+.painel-cabecalho{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px 20px;border-bottom:1px solid var(--linha)}
+.painel-cabecalho h2{margin:0;font-size:16px}
+.painel-corpo{padding:14px 20px;overflow-y:auto;flex:1}
+.evento{padding:10px 0;border-bottom:1px solid var(--linha);font-size:13.5px}
+.evento time{display:block;font-size:12px;color:var(--apagado);font-variant-numeric:tabular-nums}
+
+/* ══ Modal ══ */
+.fundo-modal{position:fixed;inset:0;z-index:60;background:#18202e66;display:grid;place-items:center;padding:24px}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .fundo-modal{background:#0009}}
+.modal{width:560px;max-width:100%;max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:var(--superficie);border-radius:12px;box-shadow:var(--sombra)}
+.modal.largo{width:880px}
+.cabecalho-modal{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 6px 24px}
+.cabecalho-modal h2{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.corpo-modal{padding:12px 24px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.rodape-modal{display:flex;justify-content:flex-end;gap:8px;padding:12px 24px 18px;border-top:1px solid var(--linha)}
+.rodape-modal .esquerda{margin-right:auto}
+.opcao-cartao{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--linha-forte);border-radius:8px;cursor:pointer}
+.opcao-cartao:hover{background:var(--superficie-2)}
+.opcao-cartao:has(input:checked){border-color:var(--tinta);box-shadow:inset 0 0 0 1px var(--tinta)}
+.opcao-cartao input{margin-top:3px;accent-color:var(--tinta)}
+.opcao-cartao strong{display:block;font-size:14px}
+.opcao-cartao small{color:var(--grafite);font-size:12.5px}
+.item-catalogo{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--linha);border-radius:8px;cursor:pointer;text-align:left;background:var(--superficie);width:100%}
+.item-catalogo:hover{border-color:var(--tinta);background:var(--superficie-2)}
+.grupo-catalogo{font-size:13px;font-weight:700;color:var(--grafite);margin:6px 0 -6px}
+
+/* ══ Avisos (toast) ══ */
+.avisos{position:fixed;bottom:20px;left:50%;transform:translate(-50%);z-index:70;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.aviso{padding:10px 16px;border-radius:8px;background:#18202e;color:#fff;font-size:13.5px;box-shadow:var(--sombra);max-width:560px}
+.aviso-erro{background:#cf3a3a}
+
+/* ══ Proposta (visão PDF) ══ */
+.tela-pdf{position:fixed;inset:0;z-index:80;background:var(--papel);display:flex;flex-direction:column}
+.barra-pdf{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 20px;background:var(--superficie);border-bottom:1px solid var(--linha)}
+.barra-pdf .espaco{flex:1}
+.rolagem-pdf{flex:1;overflow-y:auto;padding:28px 16px}
+.folha{background:#fff;color:#18202e;max-width:820px;margin:0 auto;border-radius:8px;box-shadow:var(--sombra);padding:44px 48px;font-size:12.5px;line-height:1.5}
+.cabecalho-pdf{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #18202e;padding-bottom:12px}
+.cabecalho-pdf h1{margin:8px 0 2px;font-size:22px;letter-spacing:-.01em}
+.cabecalho-pdf p{margin:0;color:#535c6e;font-size:12px}
+.marca-pdf{display:flex;flex-direction:column;gap:3px}
+.marca-pdf i{display:block;height:4px;border-radius:2px}
+.folha h2{font-size:13px;margin:22px 0 6px;display:flex;justify-content:space-between;gap:10px}
+.folha table{font-size:12px}
+.folha th{background:#f8f9fb;color:#535c6e;font-size:10.5px;font-weight:700;padding:5px 8px;border-bottom:1px solid #cdd3dd}
+.folha td{padding:6px 8px;border-bottom:1px solid #eef0f4;color:#18202e}
+.totais-pdf{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+.totais-pdf div{background:#f3f5f8;border-radius:8px;padding:10px 14px}
+.totais-pdf small{display:block;font-size:11px;color:#535c6e;font-weight:600}
+.totais-pdf b{font-size:17px;font-variant-numeric:tabular-nums}
+.totais-pdf .destaque{background:#18202e;color:#fff}.totais-pdf .destaque small{color:#aeb6c4}
+.premissas-pdf{white-space:pre-wrap;color:#535c6e}
+.rodape-pdf{margin-top:28px;font-size:10.5px;color:#8a93a5;border-top:1px solid #eef0f4;padding-top:8px}
+
+@media print{
+  body>*:not(.tela-pdf){display:none!important}
+  .tela-pdf{position:static;background:#fff}
+  .barra-pdf{display:none}
+  .rolagem-pdf{padding:0;overflow:visible}
+  .folha{box-shadow:none;max-width:none;padding:0;border-radius:0}
+}
+@media(max-width:1100px){.corpo-editor{grid-template-columns:minmax(0,1fr)}.lateral{position:static}.lado-projeto{align-items:flex-start}}
+@media(max-width:720px){
+  .salvando{display:none}
+  .pagina{padding:20px 16px 40px}.titulo-pagina{font-size:24px}
+  .versao-app,.botao-topo .rotulo-topo{display:none}
+  .busca{width:100%}.corpo-editor{padding:12px 12px 40px}.cabecalho-projeto,.barra-ferramentas{padding-left:12px;padding-right:12px}
+  .grade-campos{grid-template-columns:1fr 1fr}.totais-pdf{grid-template-columns:1fr}.folha{padding:24px 20px}
+  .metricas{gap:12px 24px}
+}
+@media(max-width:720px){
+  #tabela-orc .tabela{background:none;border:none;overflow:visible}
+  #tabela-orc thead{display:none}
+  #tabela-orc table,#tabela-orc tbody{display:block}
+  #tabela-orc tr{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;background:var(--superficie);border:1px solid var(--linha);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+  #tabela-orc td{border:none;padding:0;background:none!important}
+  #tabela-orc td:first-child{grid-column:1/-1}
+  #tabela-orc td.valor{text-align:left}
+  #tabela-orc td[data-rot]::before{content:attr(data-rot);display:block;font-size:12px;color:var(--grafite);font-weight:600;margin-bottom:1px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-esquerda">
+    <a class="marca" href="#orcamentos" aria-label="Orçamentos, início">
+      <span class="marca-simbolo" aria-hidden="true"><i style="background:#2f6bdb;width:16px"></i><i style="background:#13968a;width:20px;margin-left:6px"></i><i style="background:#e08a00;width:12px;margin-left:3px"></i></span>
+      Orçamentos
+    </a>
+    <span class="versao-app" id="versao"></span>
+    <span class="salvando" id="salvando" aria-live="polite"></span>
+  </div>
+  <div class="topo-direita">
+    <button class="botao-topo" onclick="irPara('custos')" title="Dólar de referência para novos orçamentos"><small>US$</small> <span id="topo-fx" class="num">—</span></button>
+    <div class="menu-ancora">
+      <button class="botao-topo" id="botao-menu" aria-haspopup="true" aria-expanded="false" onclick="alternarMenu(event)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span class="rotulo-topo">Configurações</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="menu-lista" id="menu-config" hidden>
+        <div class="menu-cabecalho"><strong>Configurações</strong><span id="menu-empresa"></span></div>
+        <hr>
+        <button onclick="irPara('custos')">Tabela de custos e parâmetros</button>
+        <button onclick="irPara('servicos')">Catálogo de serviços</button>
+        <button onclick="irPara('templates')">Templates</button>
+        <hr>
+        <a href="/api/backup">Baixar backup (JSON)</a>
+        <label>Restaurar backup<input type="file" accept=".json" hidden onchange="restaurar(this.files[0]);this.value=''"></label>
+        <hr>
+        <button onclick="alternarTema()">Alternar tema claro / escuro</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="app"></main>
+<div id="camada-modal"></div>
+<div id="camada-painel"></div>
+<div class="avisos" id="avisos" aria-live="polite"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+//  Estado e utilitários
+// ══════════════════════════════════════════════════════════════════════════
+let DB = null, orc = null, saveTimer = null;
+const filtro = { status: 'todos', modelo: 'todos', q: '' };
+const recolhidos = new Set();
+
+const MODELOS = { projeto: 'Projeto', fullcommerce: 'Fullcommerce', fulfillment: 'Fulfillment' };
+const NAT = {
+  setup:    { nome: 'Setup',    longo: 'Setup · implantação',      cor: 'var(--setup)' },
+  mensal:   { nome: 'Mensal',   longo: 'Mensal · recorrente fixo', cor: 'var(--mensal)' },
+  variavel: { nome: 'Variável', longo: 'Variável · por volume',    cor: 'var(--variavel)' },
+};
+const COBRANCA = { hora: 'Por hora', unidade: 'Por unidade', fixo: 'Valor fixo', percentual: '% sobre GMV' };
+const ABAS = { orcamentos: 'Orçamentos', templates: 'Templates', servicos: 'Serviços', custos: 'Custos e parâmetros' };
+
+const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const brl = n => fmt.format(Number(n) || 0);
+const num = (n, d = 2) => (Number(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const int = n => (Number(n) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+const pct = (n, d = 1) => `${num((Number(n) || 0) * 100, d)}%`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const data = s => { if (!s) return '—'; const d = new Date(s.length === 10 ? s + 'T12:00' : s); return `${d.getDate()} ${MESES[d.getMonth()]} ${d.getFullYear()}`; };
+const dataHora = s => s ? `${data(s)}, ${new Date(s).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : '—';
+const $ = id => document.getElementById(id);
+const app = () => $('app');
+
+const ICONE = {
+  voltar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+  mais: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+  busca: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  lapis: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  lixo: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
+  x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  pdf: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15l3 3 3-3"/></svg>',
+  historico: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>',
+  pontos: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+  atualizar: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>',
+  seta: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>',
+};
+
+const selo = s => `<span class="selo selo-${s}">${(Calc.STATUS[s] || Calc.STATUS.rascunho).label}</span>`;
+const chipNat = n => `<span class="chip-nat" style="--cor:${NAT[n].cor}"><i></i>${NAT[n].nome}</span>`;
+
+async function api(method, url, body) {
+  const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || `Erro HTTP ${r.status}`);
+  return d;
+}
+function avisar(msg, erro = false) {
+  const el = document.createElement('div');
+  el.className = 'aviso' + (erro ? ' aviso-erro' : ''); el.textContent = msg;
+  $('avisos').appendChild(el); setTimeout(() => el.remove(), erro ? 6000 : 3000);
+}
+async function carregar() {
+  DB = await api('GET', '/api/db');
+  $('topo-fx').textContent = num(DB.settings.cambio.usd, 4);
+  $('menu-empresa').textContent = DB.settings.empresa;
+}
+
+// Menu de configurações e tema
+function alternarMenu(e) {
+  e.stopPropagation();
+  const m = $('menu-config'); m.hidden = !m.hidden; $('botao-menu').setAttribute('aria-expanded', !m.hidden);
+}
+document.addEventListener('click', () => { $('menu-config').hidden = true; $('botao-menu').setAttribute('aria-expanded', 'false'); document.querySelectorAll('.menu-flutuante').forEach(m => m.remove()); });
+function alternarTema() {
+  const atual = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const novo = atual === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = novo;
+  try { localStorage.setItem('co-tema', novo); } catch {}
+}
+try { const t = localStorage.getItem('co-tema'); if (t) document.documentElement.dataset.theme = t; } catch {}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Modais, confirmação e entrada de texto (no lugar de prompt/confirm)
+// ══════════════════════════════════════════════════════════════════════════
+function abrirModal(html, largo = false) {
+  $('camada-modal').innerHTML = `<div class="fundo-modal" onclick="if(event.target===this)fecharModal()"><div class="modal ${largo ? 'largo' : ''}" role="dialog" aria-modal="true">${html}</div></div>`;
+  setTimeout(() => $('camada-modal').querySelector('input:not([type=radio]):not([type=checkbox]),select,textarea')?.focus(), 30);
+}
+function fecharModal() { $('camada-modal').innerHTML = ''; }
+const cabecalhoModal = t => `<div class="cabecalho-modal"><h2>${t}</h2><button class="botao-icone" onclick="fecharModal()" aria-label="Fechar">${ICONE.x}</button></div>`;
+
+function confirmar(titulo, texto, rotuloBotao = 'Confirmar', perigo = false) {
+  return new Promise(res => {
+    window.__resp = v => { fecharModal(); res(v); };
+    abrirModal(`${cabecalhoModal(titulo)}<div class="corpo-modal"><p class="texto-apoio">${texto}</p></div>
+      <div class="rodape-modal"><button class="botao" onclick="__resp(false)">Cancelar</button><button class="botao ${perigo ? 'botao-perigo' : 'botao-primario'}" onclick="__resp(true)">${rotuloBotao}</button></div>`);
+  });
+}
+function pedirTexto(titulo, rotulo, inicial = '', rotuloBotao = 'Salvar', obrigatorio = false) {
+  return new Promise(res => {
+    window.__resp = v => { if (v !== null && obrigatorio && !v.trim()) { avisar('Preencha o campo.', true); return; } fecharModal(); res(v); };
+    abrirModal(`${cabecalhoModal(titulo)}<div class="corpo-modal"><label class="campo"><span class="rotulo-campo">${rotulo}</span><textarea class="entrada" id="texto-pedido" rows="3">${esc(inicial)}</textarea></label></div>
+      <div class="rodape-modal"><button class="botao" onclick="__resp(null)">Cancelar</button><button class="botao botao-primario" onclick="__resp($('texto-pedido').value)">${rotuloBotao}</button></div>`);
+  });
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('camada-modal').innerHTML) { if (window.__resp) window.__resp(null); fecharModal(); }
+  else if ($('tela-pdf')) fecharProposta();
+  else fecharPainel();
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Rotas
+// ══════════════════════════════════════════════════════════════════════════
+function irPara(aba) { location.hash = aba; }
+function rota() {
+  fecharModal(); fecharPainel();
+  const h = location.hash.slice(1) || 'orcamentos';
+  if (h.startsWith('orc/')) return abrirOrcamento(h.slice(4));
+  if (orc && saveTimer) salvar();
+  orc = null;
+  renderLista(ABAS[h] ? h : 'orcamentos');
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', rota);
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Página principal com abas (layout Cronogramas)
+// ══════════════════════════════════════════════════════════════════════════
+function renderLista(aba) {
+  const cont = { orcamentos: DB.orcamentos.length, templates: DB.templates.length, servicos: DB.servicos.length, custos: DB.perfis.length };
+  const acoes = {
+    orcamentos: `<button class="botao botao-primario" onclick="novoOrcamento()">${ICONE.mais} Novo orçamento</button>`,
+    templates: `<button class="botao botao-primario" onclick="editarTemplate()">${ICONE.mais} Novo template</button>`,
+    servicos: `<button class="botao botao-primario" onclick="editarServico()">${ICONE.mais} Novo serviço</button>`,
+    custos: `<button class="botao botao-primario" onclick="novoPerfil()">${ICONE.mais} Novo perfil</button>`,
+  }[aba];
+  app().innerHTML = `<div class="pagina">
+    <div class="cabecalho-pagina"><h1 class="titulo-pagina">Orçamentos</h1><div class="linha-inline">${aba === 'orcamentos' ? `<button class="botao" onclick="irPara('templates')">Ver templates</button>` : ''}${acoes}</div></div>
+    <div class="barra-abas">
+      <div class="abas" role="tablist">${Object.entries(ABAS).map(([k, l]) => `<button role="tab" aria-selected="${k === aba}" onclick="irPara('${k}')">${l}<span class="contador">${cont[k]}</span></button>`).join('')}</div>
+      ${aba === 'orcamentos' ? `<label class="busca">${ICONE.busca}<input class="entrada" id="busca" placeholder="Buscar por cliente, projeto, número ou responsável" value="${esc(filtro.q)}"></label>` : ''}
+    </div>
+    <div id="conteudo-aba"></div></div>`;
+  ({ orcamentos: abaOrcamentos, templates: abaTemplates, servicos: abaServicos, custos: abaCustos })[aba]();
+  if ($('busca')) $('busca').oninput = e => { filtro.q = e.target.value; desenharTabelaOrc(); };
+}
+
+// ── Aba Orçamentos ─────────────────────────────────────────────────────────
+function abaOrcamentos() {
+  const os = DB.orcamentos, min = DB.settings.margemMinima;
+  const soma = l => l.reduce((s, o) => s + (o.resumo?.tcv || 0), 0);
+  const abertos = os.filter(o => ['rascunho', 'em_aprovacao', 'aprovado', 'enviado'].includes(o.status));
+  const aceitos = os.filter(o => o.status === 'aceito'), perdidos = os.filter(o => o.status === 'perdido');
+  const validos = os.filter(o => o.status !== 'perdido' && o.resumo?.tcv > 0);
+  const margem = soma(validos) ? validos.reduce((s, o) => s + o.resumo.margemReal * o.resumo.tcv, 0) / soma(validos) : 0;
+  const conv = aceitos.length + perdidos.length ? aceitos.length / (aceitos.length + perdidos.length) : null;
+  const aprov = os.filter(o => o.status === 'em_aprovacao').length;
+
+  $('conteudo-aba').innerHTML = `
+    ${os.length ? `<div class="faixa-resumo metricas">
+      <div class="metrica"><span class="rotulo">Em aberto</span><span class="v">${brl(soma(abertos))} <small>${abertos.length} orçamentos</small></span></div>
+      <div class="metrica"><span class="rotulo">Aceitos</span><span class="v">${brl(soma(aceitos))} <small>${aceitos.length}</small></span></div>
+      <div class="metrica"><span class="rotulo">Margem média</span><span class="v"><span class="barra-progresso larga"><i style="width:${Math.min(100, margem * 200)}%"></i><b style="left:${min * 200}%"></b></span>${pct(margem)}</span></div>
+      <div class="metrica"><span class="rotulo">Aguardando aprovação</span><span class="v ${aprov ? 'atraso' : ''}">${aprov}</span></div>
+      <div class="metrica"><span class="rotulo">Conversão</span><span class="v">${conv === null ? '—' : pct(conv, 0)} <small>${aceitos.length} aceitos, ${perdidos.length} perdidos</small></span></div>
+    </div>` : ''}
+    <div class="barra-lista">
+      <div class="segmentado" role="group" aria-label="Filtrar por status">
+        <button aria-pressed="${filtro.status === 'todos'}" onclick="filtro.status='todos';abaOrcamentos()">Todos</button>
+        ${Object.entries(Calc.STATUS).map(([k, s]) => `<button aria-pressed="${filtro.status === k}" onclick="filtro.status='${k}';abaOrcamentos()">${s.label}</button>`).join('')}
+      </div>
+      <select class="entrada" style="width:auto" onchange="filtro.modelo=this.value;desenharTabelaOrc()">
+        <option value="todos">Todos os modelos</option>${Object.entries(MODELOS).map(([k, l]) => `<option value="${k}" ${filtro.modelo === k ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
+    <div id="tabela-orc"></div>`;
+  desenharTabelaOrc();
+}
+function desenharTabelaOrc() {
+  const q = filtro.q.toLowerCase(), min = DB.settings.margemMinima;
+  const lista = DB.orcamentos.filter(o => (filtro.status === 'todos' || o.status === filtro.status) && (filtro.modelo === 'todos' || o.modelo === filtro.modelo) &&
+    (!q || `${o.numero} ${o.cliente} ${o.projeto} ${o.responsavel}`.toLowerCase().includes(q)));
+  if (!DB.orcamentos.length) {
+    $('tabela-orc').innerHTML = `<div class="vazio"><strong>Nenhum orçamento ainda</strong><p>Comece por um template: a tabela de custos e as horas já vêm preenchidas.</p><button class="botao botao-primario" onclick="novoOrcamento()">${ICONE.mais} Novo orçamento</button></div>`; return;
+  }
+  if (!lista.length) { $('tabela-orc').innerHTML = `<div class="vazio"><strong>Nada encontrado</strong><p>Nenhum orçamento com esses filtros.</p></div>`; return; }
+  $('tabela-orc').innerHTML = `<div class="tabela rolagem"><table><thead><tr>
+    <th>Orçamento</th><th>Cliente</th><th>Status</th><th class="dir">Setup</th><th class="dir">Mensalidade</th><th class="dir">Valor do contrato</th><th>Margem</th><th>Validade</th></tr></thead><tbody>
+    ${lista.map(o => { const r = o.resumo || {}; const baixa = o.itens?.length && r.margemReal < min; const vencido = o.validade && o.validade < new Date().toISOString().slice(0, 10) && !['aceito', 'perdido'].includes(o.status);
+      return `<tr class="clicavel" onclick="location.hash='orc/${o.id}'">
+        <td><div class="forte">${esc(o.projeto)}</div><div class="secundario">${esc(o.numero)} · ${MODELOS[o.modelo]}</div></td>
+        <td data-rot="Cliente">${esc(o.cliente)}</td><td data-rot="Status">${selo(o.status)}</td>
+        <td class="valor" data-rot="Setup">${brl(r.setup)}</td><td class="valor" data-rot="Mensalidade">${r.mensal ? brl(r.mensal) : '<span class="secundario">—</span>'}</td>
+        <td class="valor forte" data-rot="Valor do contrato">${brl(r.tcv)}</td>
+        <td data-rot="Margem"><div class="linha-inline" style="gap:8px;flex-wrap:nowrap"><span class="barra-progresso"><i style="width:${Math.max(0, Math.min(100, r.margemReal * 200))}%;${baixa ? 'background:var(--atraso)' : ''}"></i></span><span class="num ${baixa ? 'atraso forte' : ''}">${pct(r.margemReal)}</span></div>${baixa ? '<div class="secundario atraso">abaixo da mínima</div>' : ''}</td>
+        <td class="${vencido ? 'atraso' : ''}" style="white-space:nowrap" data-rot="Validade">${data(o.validade)}</td></tr>`; }).join('')}
+    </tbody></table></div>`;
+}
+
+// ── Novo orçamento (modal no estilo "Novo cronograma") ─────────────────────
+function novoOrcamento(templateId = '') {
+  const tpl = templateId || DB.templates[0]?.id || '';
+  abrirModal(`${cabecalhoModal('Novo orçamento')}
+    <div class="corpo-modal">
+      <label class="campo"><span class="rotulo-campo">Projeto</span><input class="entrada" id="n-projeto" placeholder="Ex.: Lume – Filial"></label>
+      <div class="grade-campos">
+        <label class="campo"><span class="rotulo-campo">Cliente</span><input class="entrada" id="n-cliente" placeholder="Ex.: H Stern"></label>
+        <label class="campo"><span class="rotulo-campo">Responsável</span><input class="entrada" id="n-resp" placeholder="Quem monta a proposta"></label>
+      </div>
+      <div class="campo"><span class="rotulo-campo">Como começar</span>
+        <label class="opcao-cartao"><input type="radio" name="n-inicio" value="tpl" ${DB.templates.length ? 'checked' : 'disabled'}><span><strong>A partir de um template</strong><small>Copia itens, horas e parâmetros de preço. O custo e o dólar vigentes ficam congelados no orçamento.</small></span></label>
+        <label class="opcao-cartao"><input type="radio" name="n-inicio" value="branco" ${DB.templates.length ? '' : 'checked'}><span><strong>Em branco</strong><small>Sem itens. Você adiciona do catálogo de serviços.</small></span></label>
+      </div>
+      <label class="campo" id="n-tpl-campo"><span class="rotulo-campo">Template</span><select class="entrada" id="n-tpl">${DB.templates.map(t => `<option value="${t.id}" ${t.id === tpl ? 'selected' : ''}>${esc(t.nome)} (${MODELOS[t.modelo]})</option>`).join('')}</select></label>
+      <label class="campo" id="n-modelo-campo"><span class="rotulo-campo">Modelo de operação</span><select class="entrada" id="n-modelo">${Object.entries(MODELOS).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+    </div>
+    <div class="rodape-modal"><button class="botao" onclick="fecharModal()">Cancelar</button><button class="botao botao-primario" onclick="criarOrcamento()">Criar orçamento</button></div>`);
+  const sync = () => { const t = document.querySelector('[name=n-inicio]:checked').value === 'tpl'; $('n-tpl-campo').hidden = !t; $('n-modelo-campo').hidden = t; };
+  document.querySelectorAll('[name=n-inicio]').forEach(r => r.onchange = sync); sync();
+}
+async function criarOrcamento() {
+  const tpl = document.querySelector('[name=n-inicio]:checked').value === 'tpl';
+  try {
+    const o = await api('POST', '/api/orcamentos', { projeto: $('n-projeto').value.trim(), cliente: $('n-cliente').value.trim(), responsavel: $('n-resp').value.trim(), templateId: tpl ? $('n-tpl').value : '', modelo: $('n-modelo').value });
+    fecharModal(); await carregar(); location.hash = `orc/${o.id}`; avisar(`${o.numero} criado`);
+  } catch (e) { avisar(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Editor de orçamento (layout da tela de cronograma)
+// ══════════════════════════════════════════════════════════════════════════
+const bloqueado = () => ['enviado', 'aceito'].includes(orc?.status);
+
+function abrirOrcamento(id) {
+  const o = DB.orcamentos.find(x => x.id === id);
+  if (!o) { avisar('Orçamento não encontrado.', true); location.hash = 'orcamentos'; return; }
+  if (!orc || orc.id !== id) orc = JSON.parse(JSON.stringify(o));
+  renderEditor(); window.scrollTo(0, 0);
+}
+
+function renderEditor() {
+  const o = orc, p = o.params, D = bloqueado() ? 'disabled' : '';
+  const trans = Calc.TRANSICOES[o.status] || [];
+  const ROT = { em_aprovacao: 'Enviar para aprovação', aprovado: 'Aprovar', enviado: 'Marcar como enviado', aceito: 'Cliente aceitou', perdido: 'Perdido', rascunho: 'Voltar para rascunho' };
+  const campoPct = (k, rot, passo = 0.5) => `<label class="campo"><span class="rotulo-campo">${rot}</span><input class="entrada num" type="number" step="${passo}" data-param="${k}" data-pct="1" value="${+(((p[k] || 0) * 100).toFixed(2))}" ${D}></label>`;
+  const campoNum = (k, rot, passo = 1) => `<label class="campo"><span class="rotulo-campo">${rot}</span><input class="entrada num" type="number" min="0" step="${passo}" data-param="${k}" value="${p[k] ?? 0}" ${D}></label>`;
+  document.title = `${o.projeto} · Orçamentos`;
+
+  app().innerHTML = `
+    <section class="cabecalho-projeto">
+      <div class="titulo-projeto">
+        <button class="botao-icone" onclick="irPara('orcamentos')" aria-label="Voltar para orçamentos" style="margin-top:2px">${ICONE.voltar}</button>
+        <div><h1>${esc(o.projeto)}</h1>
+          <p>${esc(o.cliente)}, ${MODELOS[o.modelo]}${o.responsavel ? `, Responsável: ${esc(o.responsavel)}` : ''} <span class="selo selo-codigo">${esc(o.numero)}</span> ${selo(o.status)}</p></div>
+      </div>
+      <div class="lado-projeto">
+        <div class="metricas" id="metricas-cabecalho"></div>
+        <div class="linha-inline">
+          <button class="botao" onclick="abrirProposta()">${ICONE.pdf} Proposta</button>
+          <button class="botao" onclick="abrirHistorico()">${ICONE.historico} Histórico</button>
+          <div class="menu-ancora"><button class="botao" onclick="menuMais(event)" aria-haspopup="true">${ICONE.pontos} Mais</button></div>
+        </div>
+      </div>
+    </section>
+    <div class="barra-ferramentas">
+      <button class="botao" onclick="abrirCatalogo()" ${D}>${ICONE.mais} Item</button>
+      <button class="botao" onclick="acao('atualizar-custos')" ${D} title="Reaplica a tabela de custos e o dólar vigentes">${ICONE.atualizar} Atualizar custos</button>
+      ${trans.length ? '<span class="separador"></span>' : ''}
+      ${trans.map(s => `<button class="botao ${s === 'aprovado' || s === 'aceito' || (s === 'enviado' && o.status !== 'rascunho') ? 'botao-primario' : ''} ${s === 'perdido' ? 'botao-perigo-texto' : ''}" onclick="mudarStatus('${s}')">${ROT[s]}</button>`).join('')}
+      <span class="espaco"></span>
+      <div class="legenda">${Calc.NATUREZAS.map(n => `<span><i style="background:${NAT[n].cor}"></i>${NAT[n].nome}</span>`).join('')}</div>
+    </div>
+    <div class="corpo-editor">
+      <div>
+        ${bloqueado() ? `<div class="info-bloco">Orçamento ${Calc.STATUS[o.status].label.toLowerCase()}: bloqueado para edição.${o.status === 'enviado' ? ' Para revisar, use “Voltar para rascunho”. A versão enviada fica no histórico.' : ''}</div>` : ''}
+        <div class="tabela rolagem" id="itens"></div>
+        <div class="cartao" style="margin-top:16px"><div class="cartao-cabecalho"><h2>Premissas e escopo</h2><span class="secundario">aparecem na proposta</span></div><div class="cartao-corpo">
+          <textarea class="entrada" data-f="premissas" rows="5" placeholder="Escopo, fora de escopo, SLAs, reajuste, forma de pagamento…" ${D}>${esc(o.premissas)}</textarea></div></div>
+      </div>
+      <aside class="lateral">
+        <div class="cartao"><div class="cartao-cabecalho"><h2>Dados</h2></div><div class="cartao-corpo grade-campos" style="grid-template-columns:1fr 1fr">
+          <label class="campo" style="grid-column:1/-1"><span class="rotulo-campo">Projeto</span><input class="entrada" data-f="projeto" value="${esc(o.projeto)}" ${D}></label>
+          <label class="campo"><span class="rotulo-campo">Cliente</span><input class="entrada" data-f="cliente" value="${esc(o.cliente)}" ${D}></label>
+          <label class="campo"><span class="rotulo-campo">Modelo</span><select class="entrada" data-f="modelo" ${D}>${Object.entries(MODELOS).map(([k, l]) => `<option value="${k}" ${o.modelo === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label class="campo"><span class="rotulo-campo">Responsável</span><input class="entrada" data-f="responsavel" value="${esc(o.responsavel)}" ${D}></label>
+          <label class="campo"><span class="rotulo-campo">Validade</span><input class="entrada" type="date" data-f="validade" value="${esc(o.validade)}" ${D}></label>
+        </div></div>
+        <div class="cartao"><div class="cartao-cabecalho"><h2>Precificação</h2></div><div class="cartao-corpo grade-campos" style="grid-template-columns:1fr 1fr">
+          <label class="campo"><span class="rotulo-campo">Modo de preço</span><select class="entrada" data-param="modoPreco" ${D}><option value="margem" ${p.modoPreco === 'margem' ? 'selected' : ''}>Margem</option><option value="markup" ${p.modoPreco === 'markup' ? 'selected' : ''}>Markup</option></select></label>
+          ${campoPct('margem', p.modoPreco === 'markup' ? 'Markup %' : 'Margem alvo %')}
+          ${campoPct('imposto', 'Impostos %', 0.01)}
+          ${campoPct('contingencia', 'Contingência %')}
+          <label class="campo"><span class="rotulo-campo">Dólar (R$)</span><input class="entrada num" type="number" step="0.0001" data-f="cambio" value="${o.cambio}" ${D}></label>
+          ${campoNum('meses', 'Prazo (meses)')}
+          ${campoNum('pedidosMes', 'Pedidos / mês', 100)}
+          ${campoNum('gmvMes', 'GMV / mês (R$)', 1000)}
+          <label class="campo"><span class="rotulo-campo">Fee sobre GMV %</span><input class="entrada num" type="number" step="0.1" min="0" data-param="feeGmv" value="${p.feeGmv || 0}" ${D}></label>
+        </div></div>
+        <div class="cartao"><div class="cartao-cabecalho"><h2>Resumo</h2></div><div class="cartao-corpo" id="resumo"></div></div>
+      </aside>
+    </div>`;
+
+  app().querySelectorAll('[data-f]').forEach(el => el.addEventListener('input', () => {
+    o[el.dataset.f] = el.dataset.f === 'cambio' ? Number(el.value) : el.value;
+    if (el.dataset.f === 'cambio') recalcular();
+    agendarSalvar();
+  }));
+  app().querySelectorAll('[data-param]').forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+    const k = el.dataset.param;
+    p[k] = el.tagName === 'SELECT' ? el.value : el.dataset.pct ? Number(el.value) / 100 : Number(el.value);
+    if (k === 'modoPreco') { agendarSalvar(); return renderEditor(); }
+    k === 'pedidosMes' ? renderItens() : recalcular();
+    agendarSalvar();
+  }));
+  renderItens();
+}
+
+function renderItens() {
+  const o = orc, c = Calc.calcular(o), D = bloqueado() ? 'disabled' : '';
+  if (!o.itens.length) {
+    $('itens').innerHTML = `<div class="vazio"><strong>Orçamento sem itens</strong><p>Adicione horas de perfis, serviços de operação ou custos logísticos.</p><button class="botao botao-primario" onclick="abrirCatalogo()" ${D}>${ICONE.mais} Adicionar item</button></div>`;
+    return recalcular(c);
+  }
+  let h = `<table class="tabela-itens"><thead><tr><th>Item</th><th>Natureza</th><th class="dir">Custo unit.</th><th>Quantidade</th><th class="dir">Custo</th><th class="dir">Preço</th><th></th></tr></thead><tbody>`;
+  Calc.NATUREZAS.forEach(n => {
+    const linhas = c.linhas.filter(l => l.natureza === n);
+    if (!linhas.length) return;
+    const fechado = recolhidos.has(n);
+    h += `<tr class="nivel-1 ${fechado ? 'recolhido' : ''}" style="cursor:pointer" onclick="recolhidos.has('${n}')?recolhidos.delete('${n}'):recolhidos.add('${n}');renderItens()">
+      <td colspan="4"><span class="chevron">${ICONE.seta}</span> ${chipNat(n)} <span class="secundario">${NAT[n].longo.split(' · ')[1]}${n !== 'setup' ? ', valores por mês' : ''} · ${linhas.length} ${linhas.length > 1 ? 'itens' : 'item'}</span></td>
+      <td class="valor" id="gc-${n}"></td><td class="valor" id="gp-${n}"></td><td></td></tr>`;
+    if (fechado) return;
+    linhas.forEach(l => {
+      const it = l.item, u = it.uid;
+      const sub = it.tipoCobranca === 'hora' ? (it.perfilNome && it.perfilNome !== it.nome ? `${esc(it.perfilNome)}, por hora` : 'por hora') + (Calc.ehPercHoras(it) ? `, % das horas de ${NAT[it.natureza].nome.toLowerCase()}` : '') : it.tipoCobranca === 'percentual' ? '% sobre GMV' : `por ${esc(it.unidade)}`;
+      const custo = it.tipoCobranca === 'percentual'
+        ? `<div class="linha-inline" style="gap:2px;justify-content:flex-end;flex-wrap:nowrap"><input class="celula" style="width:64px" type="number" step="0.01" data-u="${u}" data-k="custoUnit" value="${it.custoUnit}" ${D}><span class="secundario">%</span></div>`
+        : `<div class="linha-inline" style="gap:2px;justify-content:flex-end;flex-wrap:nowrap"><span class="secundario">${it.moeda === 'USD' ? 'US$' : 'R$'}</span><input class="celula" style="width:76px" type="number" step="0.01" data-u="${u}" data-k="custoUnit" value="${it.custoUnit}" ${D}></div>`;
+      let qtd;
+      if (it.tipoCobranca === 'percentual') qtd = `<span class="secundario">sobre GMV/mês</span>`;
+      else if (it.tipoCobranca === 'hora') qtd = campoQtdHora(it, D);
+      else if (it.tipoCobranca !== 'unidade') qtd = `<input class="celula" style="width:80px" type="number" min="0" data-u="${u}" data-k="qtd" value="${it.qtd}" ${D}>`;
+      else qtd = `<div class="linha-inline" style="gap:4px;flex-wrap:nowrap"><select class="celula" data-u="${u}" data-k="qtdModo" ${D}><option value="fixa" ${it.qtdModo !== 'porPedido' ? 'selected' : ''}>Fixa</option><option value="porPedido" ${it.qtdModo === 'porPedido' ? 'selected' : ''}>× pedidos</option></select>
+        ${it.qtdModo === 'porPedido' ? `<input class="celula" style="width:58px" type="number" min="0" step="0.1" data-u="${u}" data-k="fator" value="${it.fator}" ${D} title="Quantidade por pedido"><span class="secundario num" id="q-${u}" style="white-space:nowrap"></span>`
+          : `<input class="celula" style="width:80px" type="number" min="0" data-u="${u}" data-k="qtd" value="${it.qtd}" ${D}>`}</div>`;
+      h += `<tr>
+        <td style="min-width:200px;padding-left:40px"><div class="forte">${esc(it.nome)}</div><div class="secundario">${it.grupo ? `<span class="etiqueta">${esc(it.grupo)}</span> ` : ''}${esc(it.area)}, ${sub}</div></td>
+        <td><select class="celula" style="color:${NAT[it.natureza].cor};font-weight:600" data-u="${u}" data-k="natureza" ${D}>${Calc.NATUREZAS.map(k => `<option value="${k}" ${it.natureza === k ? 'selected' : ''}>${NAT[k].nome}</option>`).join('')}</select></td>
+        <td class="dir">${custo}</td><td>${qtd}</td>
+        <td class="valor" id="c-${u}"></td><td class="valor forte" id="p-${u}"></td>
+        <td><button class="botao-icone" onclick="removerItem('${u}')" aria-label="Remover ${esc(it.nome)}" ${D}>${ICONE.lixo}</button></td></tr>`;
+    });
+  });
+  h += `</tbody></table>`;
+  $('itens').innerHTML = h;
+  $('itens').querySelectorAll('[data-u]').forEach(el => el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+    const it = o.itens.find(i => i.uid === el.dataset.u); if (!it) return;
+    const k = el.dataset.k;
+    const qAntes = k === 'qtdModo' ? Calc.calcular(o).linhas.find(l => l.item.uid === it.uid)?.qtd : null;
+    it[k] = el.tagName === 'SELECT' ? el.value : Number(el.value);
+    if (k === 'qtdModo' && it.qtdModo === 'porPedido' && !it.fator) it.fator = 1;
+    if (k === 'qtdModo' && it.qtdModo === 'percHoras') { it.alocacao = it.alocacao || 'dedicado'; it.percHoras = pctAlocacao(it.alocacao) ?? it.percHoras ?? 0; }
+    if (k === 'qtdModo' && it.qtdModo === 'fixa' && it.tipoCobranca === 'hora' && qAntes != null) it.qtd = qAntes;   // mantém as horas calculadas
+    if (k === 'alocacao' && pctAlocacao(it.alocacao) != null) it.percHoras = pctAlocacao(it.alocacao);
+    if (k === 'percHoras' && pctAlocacao(it.alocacao) !== it.percHoras) { it.alocacao = 'personalizado'; const sel = el.closest('td').querySelector('[data-k=alocacao]'); if (sel) sel.value = 'personalizado'; }
+    el.tagName === 'SELECT' ? renderItens() : recalcular();
+    agendarSalvar();
+  }));
+  recalcular(c);
+}
+
+// Quantidade de item por hora: horas fixas ou % da soma das demais horas (GP dedicado/compartilhado)
+const ALOCACAO = { dedicado: 'Dedicado', compartilhado: 'Compartilhado', personalizado: 'Personalizado' };
+const pctAlocacao = a => a === 'dedicado' ? DB.settings.gpDedicadoPct : a === 'compartilhado' ? DB.settings.gpCompartilhadoPct : null;
+function campoQtdHora(it, D) {
+  const u = it.uid, perc = it.qtdModo === 'percHoras';
+  const modo = `<select class="celula" data-u="${u}" data-k="qtdModo" ${D} title="Como calcular as horas"><option value="fixa" ${!perc ? 'selected' : ''}>Horas</option><option value="percHoras" ${perc ? 'selected' : ''}>% das horas</option></select>`;
+  if (!perc) return `<div class="linha-inline" style="gap:4px;flex-wrap:nowrap">${modo}<input class="celula" style="width:72px" type="number" min="0" data-u="${u}" data-k="qtd" value="${it.qtd}" ${D}></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:2px">
+    <div class="linha-inline" style="gap:4px;flex-wrap:nowrap">${modo}
+      <select class="celula" data-u="${u}" data-k="alocacao" ${D}>${Object.entries(ALOCACAO).map(([k, l]) => `<option value="${k}" ${(it.alocacao || 'personalizado') === k ? 'selected' : ''}>${l}${pctAlocacao(k) != null ? ` ${num(pctAlocacao(k), 0)}%` : ''}</option>`).join('')}</select></div>
+    <div class="linha-inline" style="gap:4px;flex-wrap:nowrap"><input class="celula" style="width:64px" type="number" min="0" step="0.5" data-u="${u}" data-k="percHoras" value="${it.percHoras}" ${D} aria-label="Percentual sobre as horas"><span class="secundario">%</span>
+      <span class="secundario num" id="q-${u}" style="white-space:nowrap"></span></div></div>`;
+}
+
+function recalcular(c) {
+  c = c || Calc.calcular(orc);
+  c.linhas.forEach(l => { const u = l.item.uid;
+    if ($('c-' + u)) $('c-' + u).textContent = num(l.custo);
+    if ($('p-' + u)) $('p-' + u).textContent = num(l.preco);
+    if ($('q-' + u)) $('q-' + u).textContent = l.baseHoras !== null
+      ? (l.baseHoras ? `= ${int(l.qtd)} h de ${int(l.baseHoras)} h` : 'sem horas na base')
+      : `= ${int(l.qtd)}`; });
+  Calc.NATUREZAS.forEach(n => { if ($('gc-' + n)) $('gc-' + n).textContent = num(c.nat[n].custo); if ($('gp-' + n)) $('gp-' + n).textContent = num(c.nat[n].preco); });
+
+  const min = DB.settings.margemMinima, m = c.margemReal, baixa = m < min && orc.itens.length, p = c.params;
+  $('metricas-cabecalho').innerHTML = `
+    <div class="metrica"><span class="rotulo">Setup</span><span class="v">${brl(c.setup)}</span></div>
+    ${c.temRecorrente ? `<div class="metrica"><span class="rotulo">Mensalidade</span><span class="v">${brl(c.mensal)}</span></div>` : `<div class="metrica"><span class="rotulo">Horas</span><span class="v">${int(c.horasSetup)} h</span></div>`}
+    <div class="metrica"><span class="rotulo">${c.temRecorrente ? `Contrato, ${p.meses} meses` : 'Valor total'}</span><span class="v">${brl(c.tcv)}</span></div>
+    <div class="metrica"><span class="rotulo">Margem real</span><span class="v ${baixa ? 'atraso' : ''}"><span class="barra-progresso larga"><i style="width:${Math.max(0, Math.min(100, m * 200))}%;${baixa ? 'background:var(--atraso)' : ''}"></i><b style="left:${min * 200}%" title="Margem mínima ${pct(min, 0)}"></b></span>${pct(m)}</span></div>`;
+
+  const hp = Object.entries(c.horasPerfil).sort((a, b) => (b[1].setup + b[1].mes) - (a[1].setup + a[1].mes));
+  $('resumo').innerHTML = `
+    ${baixa ? `<div class="erro-bloco">Margem abaixo da mínima de ${pct(min, 0)}. Para enviar ao cliente, passe por aprovação.</div>` : ''}
+    ${p.modoPreco === 'markup' && orc.itens.length ? `<div class="aviso-bloco">Markup de ${pct(p.margem, 0)} sobre o custo equivale a ${pct(m)} de margem real sobre o preço.</div>` : ''}
+    <div class="linha-resumo"><span>Setup (único)</span><span>${brl(c.setup)}</span></div>
+    ${c.temRecorrente ? `<div class="linha-resumo"><span>Mensalidade</span><span>${brl(c.mensal)}</span></div>${c.feeMes ? `<div class="linha-resumo"><span style="padding-left:12px">inclui fee de ${num(p.feeGmv, 1)}% do GMV</span><span>${brl(c.feeMes)}</span></div>` : ''}` : ''}
+    <div class="linha-resumo"><span>Custo total</span><span>${brl(c.custoTotal)}</span></div>
+    <div class="linha-resumo"><span>Impostos</span><span>${brl(c.impostoTotal)}</span></div>
+    <div class="linha-resumo"><span>Lucro</span><span class="${baixa ? 'atraso' : 'ok'}">${brl(c.lucro)}</span></div>
+    <div class="linha-resumo"><span>Markup equivalente</span><span>${pct(c.markupEquiv)}</span></div>
+    <div class="linha-resumo total"><span>${c.temRecorrente ? `Valor do contrato (${p.meses} meses)` : 'Valor total'}</span><span>${brl(c.tcv)}</span></div>
+    ${hp.length ? `<div class="rotulo-campo" style="margin:16px 0 4px">Horas por perfil</div>
+      ${hp.map(([k, v]) => `<div class="linha-resumo"><span>${esc(k)}</span><span>${v.setup ? int(v.setup) + ' h' : ''}${v.setup && v.mes ? ' + ' : ''}${v.mes ? int(v.mes) + ' h/mês' : ''}</span></div>`).join('')}
+      <div class="linha-resumo total"><span>Implantação${c.horasMensais ? ' / operação' : ''}</span><span>${int(c.horasSetup)} h${c.horasMensais ? ` / ${int(c.horasMensais)} h/mês` : ''}</span></div>` : ''}`;
+}
+
+// ── Salvamento automático ──────────────────────────────────────────────────
+function agendarSalvar() {
+  if (bloqueado()) return;
+  $('salvando').textContent = 'Alterações pendentes…';
+  clearTimeout(saveTimer); saveTimer = setTimeout(salvar, 700);
+}
+async function salvar() {
+  if (!orc) return;
+  clearTimeout(saveTimer); saveTimer = null;
+  const o = orc;
+  try {
+    $('salvando').textContent = 'Salvando…';
+    const s = await api('PUT', `/api/orcamentos/${o.id}`, { cliente: o.cliente, projeto: o.projeto, modelo: o.modelo, responsavel: o.responsavel, validade: o.validade, cambio: o.cambio, params: o.params, premissas: o.premissas, itens: o.itens });
+    const i = DB.orcamentos.findIndex(x => x.id === o.id); DB.orcamentos[i] = s;
+    const mudou = s.status !== o.status;
+    o.status = s.status; o.historico = s.historico; o.resumo = s.resumo;
+    if (mudou && orc?.id === o.id) { renderEditor(); avisar('Editado após aprovação: voltou para rascunho.'); }
+    $('salvando').textContent = `Salvo às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  } catch (e) { $('salvando').textContent = 'Erro ao salvar'; avisar(e.message, true); }
+}
+window.addEventListener('beforeunload', e => { if (saveTimer) { salvar(); e.preventDefault(); } });
+
+async function mudarStatus(s) {
+  let comentario = '';
+  const perguntas = { em_aprovacao: 'Justificativa para a aprovação (opcional)', aprovado: 'Comentário da aprovação (opcional)', perdido: 'Motivo da perda: preço, prazo, concorrente…', rascunho: 'Motivo da revisão (opcional)' };
+  if (perguntas[s]) {
+    const r = await pedirTexto(Calc.STATUS[s].label === 'Rascunho' ? 'Voltar para rascunho' : ({ em_aprovacao: 'Enviar para aprovação', aprovado: 'Aprovar orçamento', perdido: 'Marcar como perdido' }[s]), perguntas[s], '', 'Confirmar');
+    if (r === null) return; comentario = r;
+  }
+  try {
+    await salvar();
+    const r = await api('POST', `/api/orcamentos/${orc.id}/status`, { status: s, comentario, por: orc.responsavel });
+    await carregar(); orc = JSON.parse(JSON.stringify(r)); renderEditor(); avisar(`Status: ${Calc.STATUS[s].label}`);
+  } catch (e) { avisar(e.message, true); }
+}
+
+function menuMais(e) {
+  e.stopPropagation();
+  document.querySelectorAll('.menu-flutuante').forEach(m => m.remove());
+  const m = document.createElement('div');
+  m.className = 'menu-lista menu-flutuante';
+  m.innerHTML = `<button onclick="acao('duplicar')">Duplicar orçamento</button>
+    <button onclick="acao('versao')">Salvar versão agora</button>
+    <button onclick="salvarComoTemplate()">Salvar como template</button>
+    <button onclick="exportarCSV()">Exportar itens (CSV)</button>
+    <hr><button class="perigo" onclick="excluirOrcamento()">Excluir orçamento</button>`;
+  e.currentTarget.parentElement.appendChild(m);
+  m.addEventListener('click', ev => ev.stopPropagation());
+}
+async function acao(a) {
+  document.querySelectorAll('.menu-flutuante').forEach(m => m.remove());
+  try {
+    await salvar();
+    const r = await api('POST', `/api/orcamentos/${orc.id}/${a}`);
+    await carregar();
+    if (a === 'duplicar') { orc = null; location.hash = `orc/${r.id}`; avisar(`Cópia criada: ${r.numero}`); return; }
+    orc = JSON.parse(JSON.stringify(r)); renderEditor();
+    avisar({ versao: 'Versão salva', 'atualizar-custos': 'Custos e dólar atualizados pela tabela vigente' }[a]);
+  } catch (e) { avisar(e.message, true); }
+}
+async function excluirOrcamento() {
+  document.querySelectorAll('.menu-flutuante').forEach(m => m.remove());
+  if (!await confirmar('Excluir orçamento', `${esc(orc.numero)} · ${esc(orc.projeto)} será excluído definitivamente, com todas as versões.`, 'Excluir', true)) return;
+  try { await api('DELETE', `/api/orcamentos/${orc.id}`); clearTimeout(saveTimer); saveTimer = null; orc = null; await carregar(); irPara('orcamentos'); avisar('Orçamento excluído'); }
+  catch (e) { avisar(e.message, true); }
+}
+async function salvarComoTemplate() {
+  document.querySelectorAll('.menu-flutuante').forEach(m => m.remove());
+  const nome = await pedirTexto('Salvar como template', 'Nome do template', orc.projeto, 'Salvar template', true);
+  if (!nome) return;
+  try {
+    await api('POST', '/api/templates', { nome: nome.trim(), modelo: orc.modelo, descricao: `Criado a partir de ${orc.numero}`, params: orc.params,
+      itens: orc.itens.map(i => ({ servicoId: i.servicoId, qtd: i.qtd, qtdModo: i.qtdModo, fator: i.fator, natureza: i.natureza, percHoras: i.percHoras, alocacao: i.alocacao })) });
+    await carregar(); avisar('Template salvo');
+  } catch (e) { avisar(e.message, true); }
+}
+function exportarCSV() {
+  document.querySelectorAll('.menu-flutuante').forEach(m => m.remove());
+  const c = Calc.calcular(orc);
+  const rows = [['Natureza', 'Área', 'Item', 'Perfil/unidade', 'Moeda', 'Custo unitário', 'Qtd efetiva', 'Custo R$', 'Preço R$']];
+  c.linhas.forEach(l => rows.push([NAT[l.natureza].nome, l.item.area, l.item.nome, l.item.perfilNome || l.item.unidade, l.item.moeda, num(l.item.custoUnit), l.qtd === null ? '' : num(l.qtd), num(l.custo), num(l.preco)]));
+  const csv = '\ufeff' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `${orc.numero}.csv`; a.click();
+}
+
+// ── Painel lateral: histórico e versões ────────────────────────────────────
+function abrirHistorico() {
+  const o = orc;
+  $('camada-painel').innerHTML = `<aside class="painel" aria-label="Histórico">
+    <div class="painel-cabecalho"><h2>Histórico</h2><button class="botao-icone" onclick="fecharPainel()" aria-label="Fechar">${ICONE.x}</button></div>
+    <div class="painel-corpo">
+      ${o.versoes.length ? `<div class="rotulo-campo" style="margin-bottom:6px">Versões congeladas</div>
+        <div class="tabela" style="margin-bottom:18px"><table><thead><tr><th>Versão</th><th>Data</th><th class="dir">Contrato</th><th class="dir">Margem</th></tr></thead><tbody>
+        ${o.versoes.slice().reverse().map(v => `<tr><td class="forte">v${v.v}</td><td>${data(v.data)}</td><td class="valor">${brl(v.resumo.tcv)}</td><td class="valor">${pct(v.resumo.margemReal)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <div class="rotulo-campo">Atividade</div>
+      ${o.historico.slice().reverse().map(h => `<div class="evento"><time>${dataHora(h.data)}${h.por ? ` · ${esc(h.por)}` : ''}</time>${esc(h.acao)}</div>`).join('')}
+    </div></aside>`;
+}
+function fecharPainel() { $('camada-painel').innerHTML = ''; }
+
+// ── Catálogo ───────────────────────────────────────────────────────────────
+function abrirCatalogo() {
+  if (bloqueado()) return;
+  const areas = [...new Set(DB.servicos.map(s => s.area))];
+  const desc = s => {
+    if (s.tipoCobranca === 'hora') { const pf = DB.perfis.find(p => p.id === s.perfilId); return pf ? `${pf.moeda === 'USD' ? 'US$' : 'R$'} ${num(pf.custoHora)}/h, ${esc(pf.nome)}` : 'perfil ausente'; }
+    if (s.tipoCobranca === 'percentual') return `${num(s.custoUnit)}% do GMV`;
+    return `${s.moeda === 'USD' ? 'US$' : 'R$'} ${num(s.custoUnit)} por ${esc(s.unidade)}`;
+  };
+  abrirModal(`${cabecalhoModal('Adicionar item')}
+    <div class="corpo-modal">
+      <label class="busca" style="width:100%">${ICONE.busca}<input class="entrada" id="cat-q" placeholder="Buscar serviço, área ou grupo"></label>
+      <div id="cat-lista" style="display:flex;flex-direction:column;gap:6px">
+      ${areas.map(a => `<div class="grupo-catalogo" data-area="${esc(a)}">${esc(a)}</div>${DB.servicos.filter(s => s.area === a).map(s => `
+        <button class="item-catalogo" data-a="${esc(a)}" data-q="${esc((s.nome + ' ' + a + ' ' + (s.grupo || '')).toLowerCase())}" onclick="adicionarItem('${s.id}')">
+          <span style="flex:1"><span class="forte">${esc(s.nome)}</span><br><span class="secundario">${COBRANCA[s.tipoCobranca]}, ${desc(s)}</span></span>${chipNat(s.natureza)}</button>`).join('')}`).join('')}
+      </div></div>`, true);
+  $('cat-q').oninput = e => { const q = e.target.value.toLowerCase();
+    document.querySelectorAll('#cat-lista .item-catalogo').forEach(el => el.hidden = !el.dataset.q.includes(q));
+    document.querySelectorAll('#cat-lista .grupo-catalogo').forEach(g => g.hidden = ![...document.querySelectorAll(`#cat-lista .item-catalogo[data-a="${CSS.escape(g.dataset.area)}"]`)].some(x => !x.hidden)); };
+}
+async function adicionarItem(servicoId) {
+  try {
+    await salvar();
+    const r = await api('POST', `/api/orcamentos/${orc.id}/item`, { servicoId, qtd: 1 });
+    const i = DB.orcamentos.findIndex(x => x.id === r.id); DB.orcamentos[i] = r;
+    orc.itens = JSON.parse(JSON.stringify(r.itens)); orc.historico = r.historico;
+    recolhidos.clear(); renderItens(); avisar('Item adicionado. Ajuste a quantidade.');
+  } catch (e) { avisar(e.message, true); }
+}
+function removerItem(u) { orc.itens = orc.itens.filter(i => i.uid !== u); renderItens(); agendarSalvar(); }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Proposta (visão do cliente, no padrão do PDF do Cronogramas)
+// ══════════════════════════════════════════════════════════════════════════
+function abrirProposta() {
+  const o = orc, c = Calc.calcular(o), p = c.params, s = DB.settings;
+  const TIT = { setup: 'Implantação · pagamento único', mensal: 'Operação · mensalidade fixa', variavel: 'Operação variável · estimativa mensal' };
+  const secoes = Calc.NATUREZAS.map(n => {
+    const linhas = c.linhas.filter(l => l.natureza === n); if (!linhas.length) return '';
+    const rows = [], grupos = {};
+    linhas.forEach(l => { const g = l.item.grupo;
+      if (g) { if (!grupos[g]) { grupos[g] = { nome: g, qtd: 0, preco: 0, un: 'h' }; rows.push(grupos[g]); } grupos[g].qtd += l.qtd || 0; grupos[g].preco += l.preco; }
+      else rows.push({ nome: l.item.nome, qtd: l.qtd, preco: l.preco, un: l.item.tipoCobranca === 'hora' ? 'h' : l.item.unidade, gmv: l.item.tipoCobranca === 'percentual' }); });
+    return `<h2><span>${TIT[n]}</span><span class="num">${brl(c.nat[n].preco)}</span></h2>
+      <table><thead><tr><th>Serviço</th><th style="text-align:right">Quantidade</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td>${esc(r.nome)}</td><td style="text-align:right;white-space:nowrap">${r.gmv ? 'sobre GMV' : `${int(r.qtd)} ${esc(r.un)}`}</td><td style="text-align:right;white-space:nowrap" class="num">${brl(r.preco)}</td></tr>`).join('')}
+      </tbody></table>`; }).join('');
+  const el = document.createElement('div');
+  el.className = 'tela-pdf'; el.id = 'tela-pdf';
+  el.innerHTML = `<div class="barra-pdf"><button class="botao-icone" onclick="fecharProposta()" aria-label="Voltar">${ICONE.voltar}</button><strong>Proposta</strong><span class="dica-campo">Visão do cliente: sem custos nem margem.</span><span class="espaco"></span><button class="botao botao-primario" onclick="window.print()">${ICONE.pdf} Imprimir ou salvar PDF</button></div>
+    <div class="rolagem-pdf"><div class="folha">
+      <div class="cabecalho-pdf"><div><span class="marca-pdf"><i style="background:#2f6bdb;width:16px"></i><i style="background:#13968a;width:20px;margin-left:6px"></i><i style="background:#e08a00;width:12px;margin-left:3px"></i></span>
+        <h1>${esc(o.projeto)}</h1><p>${esc(o.cliente)}, ${MODELOS[o.modelo]}${o.responsavel ? `, Responsável: ${esc(o.responsavel)}` : ''}</p></div>
+        <p style="text-align:right"><b style="color:#18202e">${esc(s.empresa)}</b><br>${esc(o.numero)}<br>Emitida em ${data(new Date().toISOString())}<br>Válida até ${data(o.validade)}</p></div>
+      ${secoes || '<p>Sem itens.</p>'}
+      ${p.feeGmv ? `<h2><span>Fee de performance · mensal</span><span>${num(p.feeGmv, 1)}% do GMV</span></h2><p style="margin:0">Estimado em ${brl(c.feeMes)} por mês, considerando GMV de ${brl(p.gmvMes)}.</p>` : ''}
+      <div class="totais-pdf">
+        <div><small>Setup (único)</small><b>${brl(c.setup)}</b></div>
+        <div><small>${c.temRecorrente ? 'Mensalidade estimada' : 'Horas de implantação'}</small><b>${c.temRecorrente ? brl(c.mensal) : int(c.horasSetup) + ' h'}</b></div>
+        <div class="destaque"><small>${c.temRecorrente ? `Total em ${p.meses} meses` : 'Valor total'}</small><b>${brl(c.tcv)}</b></div></div>
+      ${c.nat.variavel.custo ? `<p style="margin-top:12px;font-size:11px;color:#8a93a5">Valores variáveis estimados para ${int(p.pedidosMes)} pedidos por mês. O faturamento considera o volume realizado.</p>` : ''}
+      ${o.premissas ? `<h2><span>Premissas</span></h2><div class="premissas-pdf">${esc(o.premissas)}</div>` : ''}
+      <div class="rodape-pdf">${esc(s.empresa)} · ${esc(o.numero)} · Valores em reais${p.imposto ? ', impostos inclusos' : ''}.</div>
+    </div></div>`;
+  document.body.appendChild(el);
+}
+function fecharProposta() { $('tela-pdf')?.remove(); }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Aba Templates
+// ══════════════════════════════════════════════════════════════════════════
+function simularTemplate(t) {
+  return Calc.calcular({ cambio: DB.settings.cambio.usd, params: t.params, itens: t.itens.map(ti => {
+    const sv = DB.servicos.find(s => s.id === ti.servicoId); if (!sv) return null; const pf = DB.perfis.find(p => p.id === sv.perfilId);
+    const perc = pctAlocacao(ti.alocacao);
+    return { ...ti, percHoras: perc != null ? perc : ti.percHoras, tipoCobranca: sv.tipoCobranca, natureza: ti.natureza || sv.natureza, moeda: pf ? pf.moeda : (sv.moeda || 'BRL'), custoUnit: pf ? pf.custoHora : sv.custoUnit, perfilNome: pf?.nome }; }).filter(Boolean) });
+}
+function abaTemplates() {
+  if (!DB.templates.length) { $('conteudo-aba').innerHTML = `<div class="vazio"><strong>Nenhum template</strong><p>Crie um aqui ou use “Salvar como template” dentro de um orçamento.</p><button class="botao botao-primario" onclick="editarTemplate()">${ICONE.mais} Novo template</button></div>`; return; }
+  $('conteudo-aba').innerHTML = `<div class="tabela rolagem"><table><thead><tr><th>Template</th><th>Modelo</th><th class="dir">Itens</th><th class="dir">Valor de referência</th><th>Margem real</th><th></th></tr></thead><tbody>
+    ${DB.templates.map(t => { const c = simularTemplate(t); return `<tr>
+      <td><div class="forte">${esc(t.nome)}</div><div class="secundario">${esc(t.descricao || '')}</div></td>
+      <td>${MODELOS[t.modelo]}</td><td class="valor">${t.itens.length}</td>
+      <td class="valor">${brl(c.tcv)}${c.temRecorrente ? `<div class="secundario">${t.params.meses} meses</div>` : ''}</td>
+      <td><div class="linha-inline" style="gap:8px;flex-wrap:nowrap"><span class="barra-progresso"><i style="width:${Math.min(100, c.margemReal * 200)}%"></i></span><span class="num">${pct(c.margemReal)}</span></div></td>
+      <td><div class="linha-inline" style="justify-content:flex-end;flex-wrap:nowrap">
+        <button class="botao-icone" onclick="editarTemplate('${t.id}')" aria-label="Editar ${esc(t.nome)}">${ICONE.lapis}</button>
+        <button class="botao-icone" onclick="excluirTemplate('${t.id}')" aria-label="Excluir ${esc(t.nome)}">${ICONE.lixo}</button>
+        <button class="botao botao-pequeno" onclick="novoOrcamento('${t.id}')">Usar template</button></div></td></tr>`; }).join('')}
+    </tbody></table></div>`;
+}
+
+let rascunhoTpl = null;
+function editarTemplate(id) {
+  const s = DB.settings;
+  rascunhoTpl = id ? JSON.parse(JSON.stringify(DB.templates.find(t => t.id === id)))
+    : { nome: '', modelo: 'projeto', descricao: '', params: { modoPreco: s.modoPrecoPadrao, margem: s.margemAlvo, imposto: s.impostoPadrao, contingencia: s.contingenciaPadrao, meses: 12, pedidosMes: 0, gmvMes: 0, feeGmv: 0 }, itens: [] };
+  desenharModalTpl();
+}
+function desenharModalTpl() {
+  const t = rascunhoTpl, p = t.params;
+  const opcoes = sel => [...new Set(DB.servicos.map(s => s.area))].map(a => `<optgroup label="${esc(a)}">${DB.servicos.filter(s => s.area === a).map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${esc(s.nome)}</option>`).join('')}</optgroup>`).join('');
+  const f = (id, rot, v, tipo = 'number') => `<label class="campo"><span class="rotulo-campo">${rot}</span><input class="entrada ${tipo === 'number' ? 'num' : ''}" type="${tipo}" id="${id}" value="${esc(v)}"></label>`;
+  abrirModal(`${cabecalhoModal(t.id ? 'Editar template' : 'Novo template')}
+    <div class="corpo-modal">
+      <div class="grade-campos" style="grid-template-columns:2fr 1fr">${f('t-nome', 'Nome', t.nome, 'text')}
+        <label class="campo"><span class="rotulo-campo">Modelo</span><select class="entrada" id="t-modelo">${Object.entries(MODELOS).map(([k, l]) => `<option value="${k}" ${t.modelo === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+      ${f('t-desc', 'Descrição', t.descricao, 'text')}
+      <div class="grade-campos" style="grid-template-columns:repeat(4,1fr)">
+        <label class="campo"><span class="rotulo-campo">Modo</span><select class="entrada" id="t-modo"><option value="margem" ${p.modoPreco === 'margem' ? 'selected' : ''}>Margem</option><option value="markup" ${p.modoPreco === 'markup' ? 'selected' : ''}>Markup</option></select></label>
+        ${f('t-margem', 'Margem / markup %', +(p.margem * 100).toFixed(2))}${f('t-imp', 'Impostos %', +((p.imposto || 0) * 100).toFixed(2))}${f('t-cont', 'Contingência %', +((p.contingencia || 0) * 100).toFixed(2))}
+        ${f('t-meses', 'Meses', p.meses || 0)}${f('t-ped', 'Pedidos / mês', p.pedidosMes || 0)}${f('t-gmv', 'GMV / mês', p.gmvMes || 0)}${f('t-fee', 'Fee GMV %', p.feeGmv || 0)}
+      </div>
+      <div class="rotulo-campo">Itens</div>
+      <div class="tabela rolagem"><table class="tabela-itens"><thead><tr><th>Serviço</th><th>Natureza</th><th>Quantidade</th><th class="dir">Qtd. / fator / %</th><th></th></tr></thead><tbody>
+      ${t.itens.map((it, i) => { const sv = DB.servicos.find(s => s.id === it.servicoId); return `<tr>
+        <td><select class="celula" style="width:100%;max-width:280px" data-ti="${i}" data-k="servicoId">${opcoes(it.servicoId)}</select></td>
+        <td><select class="celula" data-ti="${i}" data-k="natureza">${Calc.NATUREZAS.map(n => `<option value="${n}" ${(it.natureza || sv?.natureza) === n ? 'selected' : ''}>${NAT[n].nome}</option>`).join('')}</select></td>
+        <td><select class="celula" data-ti="${i}" data-k="qtdModo" ${!['unidade', 'hora'].includes(sv?.tipoCobranca) ? 'disabled' : ''}>
+          <option value="fixa">${sv?.tipoCobranca === 'hora' ? 'Horas' : 'Fixa'}</option>
+          ${sv?.tipoCobranca === 'unidade' ? `<option value="porPedido" ${it.qtdModo === 'porPedido' ? 'selected' : ''}>× pedidos</option>` : ''}
+          ${sv?.tipoCobranca === 'hora' ? `<option value="percHoras" ${it.qtdModo === 'percHoras' ? 'selected' : ''}>% das horas</option>` : ''}</select>
+          ${it.qtdModo === 'percHoras' ? `<select class="celula" data-ti="${i}" data-k="alocacao">${Object.entries(ALOCACAO).map(([k, l]) => `<option value="${k}" ${(it.alocacao || 'personalizado') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}</td>
+        <td class="dir"><div class="linha-inline" style="gap:2px;justify-content:flex-end;flex-wrap:nowrap"><input class="celula" style="width:80px" type="number" step="0.1" data-ti="${i}" data-k="${{ porPedido: 'fator', percHoras: 'percHoras' }[it.qtdModo] || 'qtd'}" value="${it.qtdModo === 'porPedido' ? it.fator : it.qtdModo === 'percHoras' ? it.percHoras : it.qtd}" ${it.qtdModo === 'percHoras' && pctAlocacao(it.alocacao) != null ? 'disabled title="Definido em Parâmetros"' : ''}>${it.qtdModo === 'percHoras' ? '<span class="secundario">%</span>' : ''}</div></td>
+        <td><button class="botao-icone" onclick="capturarTpl();rascunhoTpl.itens.splice(${i},1);desenharModalTpl()" aria-label="Remover linha">${ICONE.lixo}</button></td></tr>`; }).join('') || `<tr><td colspan="5" class="secundario" style="text-align:center;padding:18px">Nenhum item. Adicione linhas abaixo.</td></tr>`}
+      </tbody></table></div>
+      <div><button class="botao botao-pequeno" onclick="capturarTpl();rascunhoTpl.itens.push({servicoId:DB.servicos[0].id,qtd:1,qtdModo:'fixa',fator:0});desenharModalTpl()">${ICONE.mais} Adicionar linha</button></div>
+    </div>
+    <div class="rodape-modal"><button class="botao" onclick="fecharModal()">Cancelar</button><button class="botao botao-primario" onclick="salvarTemplate()">Salvar template</button></div>`, true);
+  document.querySelectorAll('[data-ti]').forEach(el => el.addEventListener('change', () => {
+    const it = rascunhoTpl.itens[+el.dataset.ti], k = el.dataset.k;
+    it[k] = el.tagName === 'SELECT' ? el.value : Number(el.value);
+    if (k === 'servicoId') { delete it.natureza; it.qtdModo = 'fixa'; }
+    if (k === 'qtdModo' && it.qtdModo === 'percHoras') { it.alocacao = it.alocacao || 'dedicado'; it.percHoras = pctAlocacao(it.alocacao) ?? 0; }
+    if (k === 'alocacao' && pctAlocacao(it.alocacao) != null) it.percHoras = pctAlocacao(it.alocacao);
+    if (['qtdModo', 'servicoId', 'alocacao'].includes(k)) { capturarTpl(); desenharModalTpl(); }
+  }));
+}
+function capturarTpl() {
+  const t = rascunhoTpl; if (!$('t-nome')) return;
+  Object.assign(t, { nome: $('t-nome').value, modelo: $('t-modelo').value, descricao: $('t-desc').value });
+  Object.assign(t.params, { modoPreco: $('t-modo').value, margem: +$('t-margem').value / 100, imposto: +$('t-imp').value / 100, contingencia: +$('t-cont').value / 100, meses: +$('t-meses').value, pedidosMes: +$('t-ped').value, gmvMes: +$('t-gmv').value, feeGmv: +$('t-fee').value });
+}
+async function salvarTemplate() {
+  capturarTpl();
+  if (!rascunhoTpl.nome.trim()) return avisar('Dê um nome ao template.', true);
+  try { rascunhoTpl.id ? await api('PUT', `/api/templates/${rascunhoTpl.id}`, rascunhoTpl) : await api('POST', '/api/templates', rascunhoTpl);
+    fecharModal(); await carregar(); renderLista('templates'); avisar('Template salvo'); } catch (e) { avisar(e.message, true); }
+}
+async function excluirTemplate(id) {
+  const t = DB.templates.find(x => x.id === id);
+  if (!await confirmar('Excluir template', `“${esc(t.nome)}” será excluído. Orçamentos já criados a partir dele não mudam.`, 'Excluir', true)) return;
+  try { await api('DELETE', `/api/templates/${id}`); await carregar(); renderLista('templates'); avisar('Template excluído'); } catch (e) { avisar(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Aba Serviços
+// ══════════════════════════════════════════════════════════════════════════
+function abaServicos() {
+  const areas = [...new Set(DB.servicos.map(s => s.area))];
+  $('conteudo-aba').innerHTML = `<p class="texto-apoio" style="margin-bottom:12px">Tudo o que pode entrar num orçamento. Itens por hora usam o custo do perfil na tabela de custos.</p>
+    <div class="tabela rolagem"><table><thead><tr><th>Serviço</th><th>Cobrança</th><th>Natureza padrão</th><th class="dir">Custo</th><th></th></tr></thead><tbody>
+    ${areas.map(a => `<tr class="nivel-1"><td colspan="5">${esc(a)} <span class="secundario">· ${DB.servicos.filter(s => s.area === a).length}</span></td></tr>` + DB.servicos.filter(s => s.area === a).map(s => {
+      const pf = DB.perfis.find(p => p.id === s.perfilId);
+      const custo = s.tipoCobranca === 'hora' ? (pf ? `${pf.moeda === 'USD' ? 'US$' : 'R$'} ${num(pf.custoHora)}/h` : '<span class="atraso">perfil ausente</span>') : s.tipoCobranca === 'percentual' ? `${num(s.custoUnit)}% do GMV` : `${s.moeda === 'USD' ? 'US$' : 'R$'} ${num(s.custoUnit)} por ${esc(s.unidade)}`;
+      return `<tr class="clicavel" onclick="editarServico('${s.id}')"><td style="padding-left:28px"><div class="forte">${esc(s.nome)}</div><div class="secundario">${s.grupo ? `<span class="etiqueta">${esc(s.grupo)}</span> ` : ''}${pf ? esc(pf.nome) : ''}</div></td>
+        <td>${COBRANCA[s.tipoCobranca]}</td><td>${chipNat(s.natureza)}</td><td class="valor">${custo}</td><td class="dir"><span class="botao-icone">${ICONE.lapis}</span></td></tr>`; }).join('')).join('')}
+    </tbody></table></div>`;
+}
+function editarServico(id) {
+  const s = id ? DB.servicos.find(x => x.id === id) : { nome: '', area: 'Tecnologia', grupo: '', tipoCobranca: 'hora', natureza: 'setup', perfilId: DB.perfis[0]?.id, custoUnit: 0, unidade: 'unidade', moeda: 'BRL' };
+  const areas = [...new Set([...DB.servicos.map(x => x.area), 'Tecnologia', 'Operação', 'Logística', 'Gestão'])];
+  abrirModal(`${cabecalhoModal(id ? 'Editar serviço' : 'Novo serviço')}
+    <div class="corpo-modal">
+      <label class="campo"><span class="rotulo-campo">Nome</span><input class="entrada" id="s-nome" value="${esc(s.nome)}"></label>
+      <div class="grade-campos" style="grid-template-columns:1fr 1fr">
+        <label class="campo"><span class="rotulo-campo">Área</span><input class="entrada" id="s-area" list="s-areas" value="${esc(s.area)}"><datalist id="s-areas">${areas.map(a => `<option value="${esc(a)}">`).join('')}</datalist></label>
+        <label class="campo"><span class="rotulo-campo">Grupo (opcional)</span><input class="entrada" id="s-grupo" value="${esc(s.grupo || '')}" placeholder="Ex.: Squad Dev"></label>
+        <label class="campo"><span class="rotulo-campo">Cobrança</span><select class="entrada" id="s-tipo">${Object.entries(COBRANCA).map(([k, l]) => `<option value="${k}" ${s.tipoCobranca === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label class="campo"><span class="rotulo-campo">Natureza padrão</span><select class="entrada" id="s-nat">${Calc.NATUREZAS.map(n => `<option value="${n}" ${s.natureza === n ? 'selected' : ''}>${NAT[n].nome}</option>`).join('')}</select></label>
+      </div>
+      <label class="campo" id="s-perfil-campo"><span class="rotulo-campo">Perfil (custo por hora)</span><select class="entrada" id="s-perfil">${DB.perfis.map(p => `<option value="${p.id}" ${s.perfilId === p.id ? 'selected' : ''}>${esc(p.nome)}, ${p.moeda === 'USD' ? 'US$' : 'R$'} ${num(p.custoHora)}/h</option>`).join('')}</select></label>
+      <div class="grade-campos" id="s-unit-campos" style="grid-template-columns:1fr 1fr 1fr">
+        <label class="campo"><span class="rotulo-campo" id="s-custo-rot">Custo unitário</span><input class="entrada num" type="number" step="0.01" id="s-custo" value="${s.custoUnit || 0}"></label>
+        <label class="campo" id="s-moeda-campo"><span class="rotulo-campo">Moeda</span><select class="entrada" id="s-moeda"><option ${s.moeda !== 'USD' ? 'selected' : ''}>BRL</option><option ${s.moeda === 'USD' ? 'selected' : ''}>USD</option></select></label>
+        <label class="campo" id="s-un-campo"><span class="rotulo-campo">Unidade</span><input class="entrada" id="s-un" value="${esc(s.unidade || '')}" placeholder="pedido, item, pallet, mês"></label>
+      </div>
+    </div>
+    <div class="rodape-modal">${id ? `<button class="botao botao-perigo-texto esquerda" onclick="excluirServico('${id}')">${ICONE.lixo} Excluir</button>` : ''}<button class="botao" onclick="fecharModal()">Cancelar</button><button class="botao botao-primario" onclick="salvarServico('${id || ''}')">Salvar serviço</button></div>`);
+  const sync = () => { const t = $('s-tipo').value;
+    $('s-perfil-campo').hidden = t !== 'hora'; $('s-unit-campos').hidden = t === 'hora';
+    $('s-moeda-campo').hidden = $('s-un-campo').hidden = t === 'percentual';
+    $('s-custo-rot').textContent = t === 'percentual' ? 'Custo (% do GMV)' : t === 'fixo' ? 'Valor fixo' : 'Custo unitário'; };
+  $('s-tipo').onchange = sync; sync();
+}
+async function salvarServico(id) {
+  const t = $('s-tipo').value;
+  const b = { nome: $('s-nome').value.trim(), area: $('s-area').value.trim() || 'Geral', grupo: $('s-grupo').value.trim(), tipoCobranca: t, natureza: $('s-nat').value };
+  if (!b.nome) return avisar('Informe o nome do serviço.', true);
+  if (t === 'hora') Object.assign(b, { perfilId: $('s-perfil').value, unidade: 'hora' });
+  else Object.assign(b, { custoUnit: +$('s-custo').value, moeda: t === 'percentual' ? 'BRL' : $('s-moeda').value, unidade: t === 'percentual' ? '% GMV' : $('s-un').value.trim() || 'unidade', perfilId: null });
+  try { id ? await api('PUT', `/api/servicos/${id}`, b) : await api('POST', '/api/servicos', b); fecharModal(); await carregar(); renderLista('servicos'); avisar('Serviço salvo'); } catch (e) { avisar(e.message, true); }
+}
+async function excluirServico(id) {
+  if (!await confirmar('Excluir serviço', 'O serviço sai do catálogo. Orçamentos existentes mantêm os itens já adicionados.', 'Excluir', true)) return;
+  try { await api('DELETE', `/api/servicos/${id}`); await carregar(); renderLista('servicos'); avisar('Serviço excluído'); } catch (e) { avisar(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Aba Custos e parâmetros
+// ══════════════════════════════════════════════════════════════════════════
+function abaCustos() {
+  const s = DB.settings, fx = s.cambio.usd;
+  const f = (id, rot, v, passo = 1) => `<label class="campo"><span class="rotulo-campo">${rot}</span><input class="entrada num" type="number" step="${passo}" id="${id}" value="${v}"></label>`;
+  $('conteudo-aba').innerHTML = `
+    <div class="corpo-editor" style="padding:0">
+      <div>
+        <div class="tabela rolagem"><table><thead><tr><th>Perfil</th><th>Categoria</th><th>Moeda</th><th class="dir">Custo / hora</th><th class="dir">Em reais</th><th>Ativo</th><th></th></tr></thead><tbody>
+        ${DB.perfis.map(p => `<tr>
+          <td><input class="celula" style="text-align:left;font-weight:600;min-width:170px" data-p="${p.id}" data-k="nome" value="${esc(p.nome)}"></td>
+          <td><input class="celula" style="text-align:left;min-width:110px" data-p="${p.id}" data-k="categoria" value="${esc(p.categoria)}"></td>
+          <td><select class="celula" data-p="${p.id}" data-k="moeda"><option ${p.moeda === 'BRL' ? 'selected' : ''}>BRL</option><option ${p.moeda === 'USD' ? 'selected' : ''}>USD</option></select></td>
+          <td class="dir"><input class="celula" style="width:96px" type="number" step="0.01" data-p="${p.id}" data-k="custoHora" value="${p.custoHora}"></td>
+          <td class="valor">${brl(p.custoHora * (p.moeda === 'USD' ? fx : 1))}</td>
+          <td><input type="checkbox" style="accent-color:var(--tinta);width:16px;height:16px" data-p="${p.id}" data-k="ativo" ${p.ativo !== false ? 'checked' : ''} aria-label="Ativo"></td>
+          <td><button class="botao-icone" onclick="excluirPerfil('${p.id}')" aria-label="Excluir ${esc(p.nome)}">${ICONE.lixo}</button></td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="dica-campo" style="margin-top:8px">Mudanças valem para novos orçamentos. Os existentes mantêm o custo congelado até alguém usar “Atualizar custos”.</p>
+      </div>
+      <aside>
+        <div class="cartao"><div class="cartao-cabecalho"><h2>Dólar</h2><span class="secundario">${esc(s.cambio.fonte)}, ${data(s.cambio.atualizadoEm)}</span></div><div class="cartao-corpo" style="display:flex;flex-direction:column;gap:12px">
+          ${f('p-usd', 'Cotação (R$)', fx, 0.0001)}
+          <div class="linha-inline"><button class="botao" onclick="salvarDolar()">Salvar valor</button><button class="botao botao-primario" onclick="buscarPtax()">Buscar PTAX</button></div>
+          <p class="dica-campo">Perfis em USD (squad LATAM) usam esta cotação. Cada orçamento congela o dólar do dia em que foi criado.</p>
+        </div></div>
+        <div class="cartao"><div class="cartao-cabecalho"><h2>Regras de preço</h2></div><div class="cartao-corpo" style="display:flex;flex-direction:column;gap:12px">
+          <div class="grade-campos" style="grid-template-columns:1fr 1fr">
+            ${f('p-alvo', 'Margem alvo %', +(s.margemAlvo * 100).toFixed(2), 0.5)}${f('p-min', 'Margem mínima %', +(s.margemMinima * 100).toFixed(2), 0.5)}
+            ${f('p-imp', 'Impostos padrão %', +(s.impostoPadrao * 100).toFixed(2), 0.01)}${f('p-cont', 'Contingência %', +(s.contingenciaPadrao * 100).toFixed(2), 0.5)}
+            <label class="campo"><span class="rotulo-campo">Modo padrão</span><select class="entrada" id="p-modo"><option value="margem" ${s.modoPrecoPadrao === 'margem' ? 'selected' : ''}>Margem</option><option value="markup" ${s.modoPrecoPadrao === 'markup' ? 'selected' : ''}>Markup</option></select></label>
+            ${f('p-val', 'Validade (dias)', s.validadeDias)}
+            ${f('p-gpd', 'GP dedicado %', s.gpDedicadoPct ?? 25, 0.5)}${f('p-gpc', 'GP compartilhado %', s.gpCompartilhadoPct ?? 10, 0.5)}
+            <p class="dica-campo" style="grid-column:1/-1">Percentual aplicado sobre a soma das horas da mesma natureza (ex.: 510 h de setup × 25% = 127,5 h de GP). Use “Atualizar custos” para aplicar em orçamentos existentes.</p>
+            <label class="campo" style="grid-column:1/-1"><span class="rotulo-campo">Empresa na proposta</span><input class="entrada" id="p-emp" value="${esc(s.empresa)}"></label>
+          </div>
+          <div><button class="botao botao-primario" onclick="salvarRegras()">Salvar regras</button></div>
+          <p class="dica-campo">Abaixo da margem mínima, o orçamento só vai ao cliente depois de aprovado. Confirme a alíquota com o fiscal.</p>
+        </div></div>
+      </aside>
+    </div>`;
+  document.querySelectorAll('[data-p]').forEach(el => el.addEventListener('change', async () => {
+    const k = el.dataset.k, v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : el.value;
+    try { await api('PUT', `/api/perfis/${el.dataset.p}`, { [k]: v }); await carregar(); if (k === 'custoHora' || k === 'moeda') abaCustos(); avisar('Tabela de custos atualizada'); } catch (e) { avisar(e.message, true); }
+  }));
+}
+async function novoPerfil() {
+  const nome = await pedirTexto('Novo perfil', 'Nome do perfil', '', 'Criar perfil', true); if (!nome) return;
+  try { await api('POST', '/api/perfis', { nome: nome.trim(), categoria: 'Geral', moeda: 'BRL', custoHora: 0 }); await carregar(); renderLista('custos'); avisar('Perfil criado. Informe o custo por hora.'); } catch (e) { avisar(e.message, true); }
+}
+async function excluirPerfil(id) {
+  if (!await confirmar('Excluir perfil', 'O perfil sai da tabela de custos.', 'Excluir', true)) return;
+  try { await api('DELETE', `/api/perfis/${id}`); await carregar(); renderLista('custos'); } catch (e) { avisar(e.message, true); }
+}
+async function salvarRegras() {
+  try { await api('PUT', '/api/settings', { margemAlvo: +$('p-alvo').value / 100, margemMinima: +$('p-min').value / 100, impostoPadrao: +$('p-imp').value / 100, contingenciaPadrao: +$('p-cont').value / 100, modoPrecoPadrao: $('p-modo').value, validadeDias: +$('p-val').value, empresa: $('p-emp').value, gpDedicadoPct: +$('p-gpd').value, gpCompartilhadoPct: +$('p-gpc').value });
+    await carregar(); avisar('Regras salvas'); } catch (e) { avisar(e.message, true); }
+}
+async function salvarDolar() {
+  try { await api('PUT', '/api/settings', { cambio: { usd: +$('p-usd').value, fonte: 'manual', atualizadoEm: new Date().toISOString() } }); await carregar(); renderLista('custos'); avisar('Dólar atualizado'); } catch (e) { avisar(e.message, true); }
+}
+async function buscarPtax() {
+  try { const r = await api('POST', '/api/cambio/ptax'); await carregar(); renderLista('custos'); avisar(`PTAX: R$ ${num(r.usd, 4)}`); } catch (e) { avisar(e.message, true); }
+}
+async function restaurar(file) {
+  if (!file) return;
+  if (!await confirmar('Restaurar backup', `Todos os dados serão substituídos por <b>${esc(file.name)}</b>. O banco atual é copiado antes, por segurança.`, 'Restaurar', true)) return;
+  try { await api('POST', '/api/restore', JSON.parse(await file.text())); await carregar(); irPara('orcamentos'); rota(); avisar('Backup restaurado'); } catch (e) { avisar(e.message, true); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Início
+// ══════════════════════════════════════════════════════════════════════════
+(async () => {
+  try {
+    const st = await api('GET', '/api/status');
+    const d = st.buildDate?.split('-'); $('versao').textContent = `v${st.version} · ${d ? `${d[2]}/${d[1]}/${d[0]}` : ''}`;
+    await carregar(); rota();
+  } catch (e) {
+    app().innerHTML = `<div class="pagina"><div class="vazio"><strong>Não foi possível conectar ao servidor</strong><p>${esc(e.message)}</p><p>Inicie com o iniciar.bat ou com <code>node server.js</code>.</p></div></div>`;
+  }
+})();
+</script>
+</body>
+</html>

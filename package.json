@@ -1,0 +1,17 @@
+{
+  "name": "co-central-orcamentos",
+  "version": "1.2.1",
+  "buildDate": "2026-09-25",
+  "description": "C.O · Central de Orçamentos — Precificação de Projetos, Fullcommerce e Fulfillment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": ["orcamento", "precificacao", "fullcommerce", "fulfillment"],
+  "license": "MIT"
+}

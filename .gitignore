@@ -1,0 +1,6 @@
+# Dados locais (nunca versionar)
+data/
+config.json
+cache.json
+node_modules/
+.DS_Store
