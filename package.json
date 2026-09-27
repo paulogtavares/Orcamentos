@@ -1,6 +1,6 @@
 {
   "name": "orcamentos",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "buildDate": "2026-09-27",
   "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
   "private": true,
@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p compartilhado --noEmit",
+    "typecheck": "tsc -p compartilhado && tsc -p api",
     "lint": "eslint .",
     "formatar": "prettier --write .",
     "formatacao": "prettier --check ."

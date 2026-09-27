@@ -1,11 +1,11 @@
 # Dados locais (nunca versionar)
-data/
-dados/
+/data/
+/dados/
 .env
 node_modules/
 dist/
-dist-pacote/
-coverage/
-web/public/
+/dist-pacote/
+/coverage/
+/web/public/
 *.tsbuildinfo
 .DS_Store
