@@ -2,10 +2,8 @@
  * Motor de cálculo: reproduz a planilha H Stern – Lume (portado do test.js da v1.2.1).
  * Estes valores são a referência de negócio: nenhuma mudança no cálculo pode alterá-los.
  */
-import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
-
-const Calc = createRequire(import.meta.url)("../legado/calc.js");
+import * as Calc from "./calc.js";
 
 const perto = (obtido: number, esperado: number) => expect(Math.abs(obtido - esperado)).toBeLessThan(0.01);
 
