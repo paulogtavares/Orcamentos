@@ -19,14 +19,17 @@ export function Custos() {
   const fx = s.cambio.usd;
 
   const alterarPapel = useAlteracao(
-    ({ id, ...corpo }: Partial<PapelCusto> & { id: string }) => cliente.put(`/api/perfis/${id}`, corpo),
+    ({ id, ...corpo }: Partial<PapelCusto> & { id: string }) => cliente.put(`/api/papeis-custo/${id}`, corpo),
     "Tabela de custos atualizada",
   );
   const criarPapel = useAlteracao(
-    (nome: string) => cliente.post("/api/perfis", { nome, categoria: "Geral", moeda: "BRL", custoHora: 0 }),
+    (nome: string) => cliente.post("/api/papeis-custo", { nome, categoria: "Geral", moeda: "BRL", custoHora: 0 }),
     "Papel de custo criado. Informe o custo por hora.",
   );
-  const excluirPapel = useAlteracao((id: string) => cliente.delete(`/api/perfis/${id}`), "Papel de custo excluído");
+  const excluirPapel = useAlteracao(
+    (id: string) => cliente.delete(`/api/papeis-custo/${id}`),
+    "Papel de custo excluído",
+  );
   const salvarParametros = useAlteracao(
     (corpo: Partial<Parametros>) => cliente.put("/api/settings", corpo),
     "Parâmetros salvos",

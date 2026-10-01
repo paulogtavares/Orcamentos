@@ -19,6 +19,14 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
 - **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
 
+### v2.0.0-beta.2 · etapa 6: nomenclatura
+
+- Os "perfis" da tabela de custos passam a se chamar **papéis de custo** na tela, nas mensagens e no código
+  (tabela `papeis_custo`). "Perfil" fica só para o perfil de acesso (usuários e permissões)
+- Nova rota `/api/papeis-custo`; `/api/perfis` continua funcionando igual (compatibilidade com a v1.2.1)
+- O formato JSON do backup e do `db.json` não muda (`perfis`, `perfilId`, `perfilNome`): backups da v1.2.1 continuam
+  restauráveis e backups da v2 abrem na v1.2.1
+
 ### v2.0.0-beta.1 · etapa 5: telas em React
 
 - React 19, React Router 7, Vite 8 (`base: "./"`), TanStack Query e lucide-react, nas versões do Cronogramas

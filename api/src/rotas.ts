@@ -104,42 +104,46 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     return cambio;
   });
 
-  // ------------------------------------------------------------ papéis de custo (/api/perfis)
+  // ------------------------------------------------------------ papéis de custo
+  // /api/papeis-custo é o nome da v2; /api/perfis continua igual ao da v1.2.1 (compatibilidade).
+  // No JSON (backup, db.json) os campos seguem "perfis", "perfilId" e "perfilNome", como na v1.
 
-  app.get("/api/perfis", P("orcamentos.custos.ver"), async () => listarPapeis(consultar));
-  app.get("/api/perfis/:id", P("orcamentos.custos.ver"), async (req) => (await lerPapel(consultar, id(req))) ?? null);
-  app.post("/api/perfis", P("orcamentos.custos.gerenciar"), async (req, reply) => {
-    const b = V.papel.parse({ categoria: "Geral", moeda: "BRL", custoHora: 0, ativo: true, ...(req.body as Json) });
-    const novo = { ...b, id: D.novoId("pf") };
-    await emTx(req, (q) => gravarPapel(q, novo));
-    return reply.code(201).send(await lerPapel(consultar, novo.id));
-  });
-  app.put("/api/perfis/:id", P("orcamentos.custos.gerenciar"), async (req) => {
-    const b = V.papel.partial().parse(req.body);
-    return emTx(req, async (q) => {
-      const atual = await lerPapel(q, id(req));
-      if (!atual) throw naoEncontrado();
-      await gravarPapel(q, { ...atual, ...b, id: atual.id });
-      return lerPapel(q, atual.id);
+  for (const r of ["/api/papeis-custo", "/api/perfis"]) {
+    app.get(r, P("orcamentos.custos.ver"), async () => listarPapeis(consultar));
+    app.get(`${r}/:id`, P("orcamentos.custos.ver"), async (req) => (await lerPapel(consultar, id(req))) ?? null);
+    app.post(r, P("orcamentos.custos.gerenciar"), async (req, reply) => {
+      const b = V.papel.parse({ categoria: "Geral", moeda: "BRL", custoHora: 0, ativo: true, ...(req.body as Json) });
+      const novo = { ...b, id: D.novoId("pf") };
+      await emTx(req, (q) => gravarPapel(q, novo));
+      return reply.code(201).send(await lerPapel(consultar, novo.id));
     });
-  });
-  app.delete("/api/perfis/:id", P("orcamentos.custos.gerenciar"), async (req) =>
-    emTx(req, async (q) => {
-      if (!(await lerPapel(q, id(req)))) throw naoEncontrado();
-      const uso = await q<{ n: number }>("SELECT count(*)::int AS n FROM servicos WHERE papel_id = $1", [id(req)]);
-      if (uso.rows[0].n > 0)
-        throw new ErroApi(409, "Este perfil é usado por serviços do catálogo. Desative-o em vez de excluir.");
-      await q("DELETE FROM papeis_custo WHERE id = $1", [id(req)]);
-      return { ok: true };
-    }),
-  );
+    app.put(`${r}/:id`, P("orcamentos.custos.gerenciar"), async (req) => {
+      const b = V.papel.partial().parse(req.body);
+      return emTx(req, async (q) => {
+        const atual = await lerPapel(q, id(req));
+        if (!atual) throw naoEncontrado("Papel de custo");
+        await gravarPapel(q, { ...atual, ...b, id: atual.id });
+        return lerPapel(q, atual.id);
+      });
+    });
+    app.delete(`${r}/:id`, P("orcamentos.custos.gerenciar"), async (req) =>
+      emTx(req, async (q) => {
+        if (!(await lerPapel(q, id(req)))) throw naoEncontrado("Papel de custo");
+        const uso = await q<{ n: number }>("SELECT count(*)::int AS n FROM servicos WHERE papel_id = $1", [id(req)]);
+        if (uso.rows[0].n > 0)
+          throw new ErroApi(409, "Este papel de custo é usado por serviços do catálogo. Desative-o em vez de excluir.");
+        await q("DELETE FROM papeis_custo WHERE id = $1", [id(req)]);
+        return { ok: true };
+      }),
+    );
+  }
 
   // ------------------------------------------------------------ serviços
 
   async function validarServico(q: Consulta, s: Json) {
     if (s.tipoCobranca === "hora") {
       if (!s.perfilId || !(await lerPapel(q, s.perfilId)))
-        throw new ErroApi(400, "Serviço por hora precisa de um perfil da tabela de custos.");
+        throw new ErroApi(400, "Serviço por hora precisa de um papel de custo da tabela de custos.");
     }
   }
 

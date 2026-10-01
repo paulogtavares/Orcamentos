@@ -132,3 +132,18 @@ describe("fluxo da v1.2.1", () => {
     expect(depois.meta.seq).toBe(antes.meta.seq);
   });
 });
+
+describe("nomenclatura (etapa 6)", () => {
+  it("/api/papeis-custo é a rota da v2 e /api/perfis continua igual (compatibilidade com a v1.2.1)", async () => {
+    const a = await api("GET", "/api/papeis-custo");
+    const b = await api("GET", "/api/perfis");
+    expect(a.status).toBe(200);
+    expect(a.corpo).toEqual(b.corpo);
+    const novo = await api("POST", "/api/papeis-custo", { nome: "Analista de dados", custoHora: 90 });
+    expect(novo.status).toBe(201);
+    expect((await api("GET", `/api/perfis/${novo.corpo.id}`)).corpo.nome).toBe("Analista de dados");
+    const r = await api("DELETE", "/api/papeis-custo/pf_pm");
+    expect(r.status).toBe(409);
+    expect(r.corpo.erro).toMatch(/papel de custo/);
+  });
+});
