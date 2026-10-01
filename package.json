@@ -1,6 +1,6 @@
 {
   "name": "orcamentos",
-  "version": "2.0.0-alpha.5",
+  "version": "2.0.0-beta.1",
   "buildDate": "2026-09-28",
   "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
   "private": true,
@@ -18,10 +18,12 @@
     "iniciar": "tsx --env-file-if-exists=.env api/src/principal.ts",
     "importar": "tsx --env-file-if-exists=.env api/src/importar.ts",
     "test": "vitest run",
-    "typecheck": "tsc -p compartilhado && tsc -p api",
+    "typecheck": "tsc -p compartilhado && tsc -p api && tsc -p web",
     "lint": "eslint .",
     "formatar": "prettier --write .",
-    "formatacao": "prettier --check ."
+    "formatacao": "prettier --check .",
+    "dev:web": "npm run dev -w web",
+    "build:web": "npm run build -w web"
   },
   "dependencies": {
     "plataforma-kit": "github:paulogtavares/plataforma-kit#v1.4.0"

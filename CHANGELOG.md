@@ -19,6 +19,19 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
 - **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
 
+### v2.0.0-beta.1 · etapa 5: telas em React
+
+- React 19, React Router 7, Vite 8 (`base: "./"`), TanStack Query e lucide-react, nas versões do Cronogramas
+- Login, troca de senha, barra superior, sessão e tela de usuários e perfis vindos do kit; prefixo, `basename` e
+  cliente de API do kit
+- Rotas: `/` (lista), `/orcamentos/:id`, `/orcamentos/:id/proposta`, `/templates`, `/servicos`, `/custos`, `/usuarios`
+- Editor com salvamento automático, grupos Setup / Mensal / Variável, histórico e versões, catálogo, confirmações e
+  lista em cartões no celular, reproduzindo a v1.2.1
+- Estilos com os tokens e as peças do kit (tema escuro incluído); só as cores das naturezas são do módulo
+- A tela respeita as permissões: quem não vê custos não vê colunas de custo nem margem (o preço vem do servidor e é
+  recalculado a cada salvamento); aprovar e devolver só para quem aprova; somente leitura para quem não edita
+- Testes de tela (jsdom) para lista, editor e proposta por perfil
+
 ### v2.0.0-alpha.5 · etapa 4 concluída: identidade e administração do kit
 
 - plataforma-kit **1.4.0** instalado direto do GitHub (`github:paulogtavares/plataforma-kit#v1.4.0`)
