@@ -19,6 +19,17 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
 - **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
 
+### v2.0.0-beta.3 · etapa 7: modo embutido
+
+- Dentro do iframe do portal (mesma origem) não há barra superior nem abas; a cada navegação o portal recebe
+  `rota-alterada`, e quando a sessão expira com a tela aberta recebe `sessao-expirada`. O módulo obedece `navegar` e
+  `tema` vindos do portal
+- Conferido no navegador atrás de um proxy local em `/financeiro/orcamentos/` (com `X-Forwarded-Prefix`) e dentro
+  de um iframe do mesmo domínio: login, abas, editor, recarregar a página, nenhuma requisição fora do prefixo
+- **Pedido ao kit** (conversa do Cronogramas, dona do kit): no tema escuro o `.botao-primario` fica com texto branco
+  sobre fundo claro, porque `--texto-invertido` só é definido para o tema claro. O Orçamentos tem um contorno
+  marcado em `web/src/estilos.css`, restrito ao botão, a remover quando o kit corrigir
+
 ### v2.0.0-beta.2 · etapa 6: nomenclatura
 
 - Os "perfis" da tabela de custos passam a se chamar **papéis de custo** na tela, nas mensagens e no código
