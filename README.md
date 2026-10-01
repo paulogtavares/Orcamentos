@@ -25,8 +25,17 @@ cp .env.example .env         # ajuste ADMIN_EMAIL/ADMIN_SENHA ou MODO_TESTE=1
 npm run dev                  # http://127.0.0.1:3333
 npm test                     # cálculo, banco, API, permissões, contrato com a v1.2.1
 npm run typecheck && npm run lint && npm run formatacao
+npm run dev:web              # tela com recarga automática em http://localhost:5173 (API na 3333)
 npm run importar -- caminho/db.json
+npm run empacotar            # dist-pacote/orcamentos-vX_Y_Z-AAAA-MM-DD.zip
+npx tsx api/testes/gerar-db-v1.ts db.json   # db.json de exemplo gerado pela v1.2.1, para ensaiar a migração
 ```
+
+## Pacote
+
+O ZIP traz `server.js` (com o kit embutido), a tela em `public/`, `db/`, `iniciar.bat`/`iniciar.sh` (exigem Node 24)
+e um `.env` para uso local com `MODO_TESTE=1`. Em nuvem (Railway), use só as variáveis do painel, com
+`DATABASE_URL`, `NODE_ENV=production`, `ADMIN_EMAIL` e `ADMIN_SENHA`; o comando de início é `npm start`.
 
 Para rodar ao lado da v1.2.1 no mesmo computador, use outra porta (`PORT=4333`).
 

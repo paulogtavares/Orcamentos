@@ -19,6 +19,16 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
 - **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
 
+### v2.0.0-beta.4 · etapa 8: empacotamento
+
+- `npm run empacotar` gera `dist-pacote/orcamentos-vX_Y_Z-AAAA-MM-DD.zip`: `server.js` compilado com esbuild (o
+  plataforma-kit vai embutido, então o deploy não precisa de acesso ao GitHub), `importar.js`, tela do Vite em
+  `public/`, `db/`, `modulo.json`, `node_modules` só com `pg` e PGlite (o PGlite carrega arquivos `.wasm` próprios)
+- `iniciar.bat` e `iniciar.sh` exigem Node 24 e leem o `.env`; o `.env` do pacote é para uso local, com `MODO_TESTE=1`
+- Migração da v1.2.1 pelo pacote: copie `data/db.json` para `dados/db.json` antes do primeiro início (ou rode
+  `node --env-file-if-exists=.env importar.js caminho/db.json`)
+- Conferido com Node 24.21.0: todos os testes passam e o pacote sobe pelo `iniciar.sh`, numa pasta limpa
+
 ### v2.0.0-beta.3 · etapa 7: modo embutido
 
 - Dentro do iframe do portal (mesma origem) não há barra superior nem abas; a cada navegação o portal recebe
