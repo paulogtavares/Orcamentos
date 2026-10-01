@@ -19,6 +19,14 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
 - **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
 
+### v2.0.0-alpha.5 · etapa 4 concluída: identidade e administração do kit
+
+- plataforma-kit **1.4.0** instalado direto do GitHub (`github:paulogtavares/plataforma-kit#v1.4.0`)
+- Tabelas de identidade (`perfis`, `usuarios`, `sessoes`) pelo `identidade.sql` do kit, no schema `orcamentos`,
+  com o migrador do kit em modo schema; um teste confirma que são idênticas às do kit. Sai o SQL provisório
+- Rotas de administração de usuários e perfis do kit (`/api/admin/*`, só administrador)
+- O primeiro administrador criado por `ADMIN_EMAIL`/`ADMIN_SENHA` troca a senha no primeiro acesso
+
 ### v2.0.0-alpha.4 · etapa 4 (servidor): login e permissões
 
 - Permissões `orcamentos.ver`, `.editar`, `.aprovar`, `.custos.ver`, `.custos.gerenciar`,
@@ -30,7 +38,6 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - Histórico, aprovação e versões gravam o usuário logado
 - Primeiro administrador por `ADMIN_EMAIL` / `ADMIN_SENHA`; usuários de teste só com `MODO_TESTE=1`;
   sem modo de teste, quem ainda entra com a senha de teste é bloqueado em produção
-- **Provisório**: tabelas de identidade em `db/00_identidade.provisorio.sql` até o kit 1.3.0
 
 ### v2.0.0-alpha.3 · etapa 2: servidor
 

@@ -39,7 +39,7 @@ export async function criarUsuario(
     perfilId = p.rows[0].id;
   }
   const r = await c.banco.query<{ id: string }>(
-    "INSERT INTO usuarios (nome, email, administrador, perfil_id, senha_hash) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+    "INSERT INTO usuarios (nome, email, administrador, perfil_id, senha_hash, precisa_trocar_senha) VALUES ($1, $2, $3, $4, $5, false) RETURNING id",
     [o.nome ?? email.split("@")[0], email, !!o.administrador, perfilId, await gerarHashSenha(SENHA)],
   );
   return r.rows[0].id;

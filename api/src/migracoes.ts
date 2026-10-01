@@ -1,6 +1,6 @@
 /**
  * Estrutura e migrações do banco, aplicadas pelo migrador do kit ao iniciar:
- *   - banco novo (sem orcamentos.parametros): db/00_identidade.provisorio.sql e db/01_estrutura.sql;
+ *   - banco novo (sem orcamentos.parametros): identidade do kit (plataforma-kit/identidade.sql) e db/01_estrutura.sql;
  *   - migrações: db/migracoes/NN_nome.sql, cada uma uma única vez, registradas em orcamentos.migracoes.
  * Os arquivos .sql ficam fora do código (em db/) para quem opera poder lê-los; no pacote, a pasta
  * db/ vai ao lado do server.js.
@@ -8,11 +8,12 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { scriptIdentidade } from "plataforma-kit/identidade";
 import { migrar, type Script } from "plataforma-kit/migrador";
 import { SCHEMA, type Conexao } from "./banco.js";
 
 export const TABELA_REFERENCIA = `${SCHEMA}.parametros`;
-const BASE = ["00_identidade.provisorio.sql", "01_estrutura.sql"];
+const BASE = ["01_estrutura.sql"];
 
 /** Pasta db/: ao lado do server.js no pacote, ou na raiz do repositório no desenvolvimento. */
 export function pastaDb(): string {
@@ -37,6 +38,13 @@ export function lerScripts(pasta = pastaDb()) {
 /** Aplica estrutura (se o banco for novo) e migrações pendentes. Devolve o que foi aplicado. */
 export async function prepararBanco(c: Conexao, log: (msg: string) => void) {
   const { base, migracoes } = lerScripts();
-  const aplicados = await migrar(c.motor, { tabelaReferencia: TABELA_REFERENCIA, base, migracoes, log });
+  const aplicados = await migrar(c.motor, {
+    schema: SCHEMA,
+    tabelaReferencia: TABELA_REFERENCIA,
+    identidade: scriptIdentidade(),
+    base,
+    migracoes,
+    log,
+  });
   return { aplicados, bancoNovo: aplicados.includes("01_estrutura.sql") };
 }

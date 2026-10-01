@@ -1,11 +1,12 @@
 /**
  * Monta o servidor Fastify do Orçamentos sobre a base do kit:
  *   prepararServidor (cabeçalhos de segurança e de iframe, /api/status, /api/saude, /modulo.json,
- *   login, erros { erro, codigo }) + rotas do módulo + servirFront (prefixo por X-Forwarded-Prefix).
+ *   login, erros { erro, codigo }) + administração de usuários do kit + rotas do módulo + servirFront (prefixo por X-Forwarded-Prefix).
  * Sem Access-Control-Allow-Origin: a tela é servida pelo próprio servidor (mesma origem).
  */
 import Fastify from "fastify";
 import { readFileSync, existsSync } from "node:fs";
+import { rotasAdministracao } from "plataforma-kit/administracao";
 import { criarSessao } from "plataforma-kit/sessao";
 import { prepararServidor, servirFront } from "plataforma-kit/servidor";
 import type { Ambiente } from "./ambiente.js";
@@ -61,6 +62,8 @@ export async function criarServidor(o: OpcoesServidor) {
     textoValorNaoPermitido: "Valor não permitido pelas regras de orçamento.",
     log: o.log,
   });
+  // usuários e perfis (exige administrador); no Orçamentos todos os usuários são internos
+  await app.register(rotasAdministracao, { banco: o.conexao.banco, catalogo: catalogo.lista });
   await app.register(rotasOrcamentos, { conexao: o.conexao, log: o.log, ptax: o.ptax });
   servirFront(app, o.pastaFront);
   return app;

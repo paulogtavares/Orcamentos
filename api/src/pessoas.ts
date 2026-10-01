@@ -1,6 +1,7 @@
 /**
  * Pessoas do módulo ao iniciar:
- *   - primeiro administrador por ADMIN_EMAIL e ADMIN_SENHA, só quando não há administrador com senha;
+ *   - primeiro administrador por ADMIN_EMAIL e ADMIN_SENHA, só quando não há administrador com senha
+ *     (troca a senha no primeiro acesso, como no Cronogramas);
  *   - usuários de teste (um por perfil de trabalho) só com o modo de teste ligado (MODO_TESTE=1,
  *     que o kit ignora em nuvem);
  *   - sem modo de teste, a auditoria do kit bloqueia em produção quem ainda entra com a senha de teste.
@@ -59,13 +60,14 @@ export async function garantirAdministrador(
   if (fraca) throw new Error(`ADMIN_SENHA recusada: ${fraca}`);
   const hash = await gerarHashSenha(o.senha);
   const r = await banco.query(
-    `UPDATE usuarios SET administrador = true, tipo = 'interno', ativo = true, senha_hash = $2, precisa_trocar_senha = false
+    `UPDATE usuarios SET administrador = true, tipo = 'interno', ativo = true, senha_hash = $2, precisa_trocar_senha = true
       WHERE lower(email) = $1`,
     [email, hash],
   );
   if (!r.rowCount)
     await banco.query(
-      `INSERT INTO usuarios (nome, email, tipo, administrador, senha_hash) VALUES ($1, $2, 'interno', true, $3)`,
+      `INSERT INTO usuarios (nome, email, tipo, administrador, senha_hash, precisa_trocar_senha)
+       VALUES ($1, $2, 'interno', true, $3, true)`,
       [email.split("@")[0], email, hash],
     );
   o.log(`[acesso] administrador ${email} ${r.rowCount ? "reativado com a senha de ADMIN_SENHA" : "criado"}`);
@@ -90,8 +92,8 @@ export async function garantirUsuariosDeTeste(banco: Banco) {
         ).rows[0].id;
     }
     await banco.query(
-      `INSERT INTO usuarios (nome, email, administrador, perfil_id, senha_hash)
-       SELECT $1, $2, $3, $4, $5 WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE lower(email) = $2)`,
+      `INSERT INTO usuarios (nome, email, administrador, perfil_id, senha_hash, precisa_trocar_senha)
+       SELECT $1, $2, $3, $4, $5, false WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE lower(email) = $2)`,
       [u.nome, u.email, !u.permissoes, perfilId, hash],
     );
   }

@@ -1,7 +1,7 @@
 {
   "name": "orcamentos",
-  "version": "2.0.0-alpha.4",
-  "buildDate": "2026-09-27",
+  "version": "2.0.0-alpha.5",
+  "buildDate": "2026-09-28",
   "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
   "private": true,
   "type": "module",
@@ -24,7 +24,7 @@
     "formatacao": "prettier --check ."
   },
   "dependencies": {
-    "plataforma-kit": "file:../plataforma-kit-1.2.0.tgz"
+    "plataforma-kit": "github:paulogtavares/plataforma-kit#v1.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
