@@ -19,7 +19,7 @@ describe("base do kit", () => {
     expect(st.statusCode).toBe(200);
     expect(JSON.parse(st.body)).toMatchObject({
       version: "2.0.0-teste",
-      banco: "embutido",
+      banco: process.env.TESTE_PG ? "postgres" : "embutido",
       autenticacao: "local",
       ambiente: "local",
     });

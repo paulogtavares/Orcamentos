@@ -5,8 +5,35 @@ import { prepararBanco } from "../src/migracoes.js";
 
 export const semLog = () => {};
 
+/**
+ * Banco novo para um teste: PGlite em memória (padrão) ou, com TESTE_PG (conexão de administrador, ex.:
+ * postgres://postgres@127.0.0.1:5433/postgres), um banco PostgreSQL recém-criado para o teste.
+ */
+export async function bancoNovo(): Promise<Conexao> {
+  const admin = process.env.TESTE_PG;
+  if (!admin) return abrirBanco({ memoria: true });
+  const { default: pg } = await import("pg");
+  const nome = `teste_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const c = new pg.Client({ connectionString: admin });
+  await c.connect();
+  await c.query(`CREATE DATABASE ${nome}`);
+  await c.end();
+  const url = new URL(admin);
+  url.pathname = `/${nome}`;
+  const conexao = await abrirBanco({ databaseUrl: url.toString() });
+  const fechar = conexao.fechar;
+  conexao.fechar = async () => {
+    await fechar();
+    const d = new pg.Client({ connectionString: admin });
+    await d.connect();
+    await d.query(`DROP DATABASE IF EXISTS ${nome}`);
+    await d.end();
+  };
+  return conexao;
+}
+
 export async function bancoVazio(): Promise<Conexao> {
-  const c = await abrirBanco({ memoria: true });
+  const c = await bancoNovo();
   await prepararBanco(c, semLog);
   return c;
 }

@@ -1,6 +1,6 @@
 {
   "name": "orcamentos",
-  "version": "2.0.0-beta.4",
+  "version": "2.0.0-beta.5",
   "buildDate": "2026-10-01",
   "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
   "private": true,
@@ -24,7 +24,8 @@
     "formatacao": "prettier --check .",
     "dev:web": "npm run dev -w web",
     "build:web": "npm run build -w web",
-    "empacotar": "node empacotar/empacotar.mjs"
+    "empacotar": "node empacotar/empacotar.mjs",
+    "test:pg": "vitest run"
   },
   "dependencies": {
     "plataforma-kit": "github:paulogtavares/plataforma-kit#v1.4.0"

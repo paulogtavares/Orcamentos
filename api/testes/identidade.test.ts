@@ -1,30 +1,24 @@
 /** Etapa 4: identidade pelo SQL do kit (nada copiado do Cronogramas) e administração de usuários do kit. */
-import { PGlite } from "@electric-sql/pglite";
 import { describe, expect, it } from "vitest";
 import { descreverIdentidade, SQL_IDENTIDADE } from "plataforma-kit/identidade";
 import { garantirAdministrador } from "../src/pessoas.js";
-import { bancoVazio, criarUsuario, semLog, servidorDeTeste } from "./apoio.js";
+import { bancoNovo, bancoVazio, criarUsuario, semLog, servidorDeTeste } from "./apoio.js";
 
 describe("identidade do kit", () => {
   it("as tabelas de identidade no schema orcamentos são idênticas às do identidade.sql do kit", async () => {
     const c = await bancoVazio();
-    const ref = await PGlite.create();
+    // referência no mesmo motor do teste (PGlite ou PostgreSQL): o catálogo muda entre versões do PostgreSQL
+    const ref = await bancoNovo();
     try {
-      await ref.exec(`CREATE SCHEMA referencia; SET search_path TO referencia, public; ${SQL_IDENTIDADE}`);
-      const bancoRef = {
-        query: async (sql: string, p?: unknown[]) => ({
-          rows: (await ref.query<any>(sql, p as any[])).rows,
-          rowCount: 0,
-        }),
-      };
-      expect(await descreverIdentidade(c.banco)).toEqual(await descreverIdentidade(bancoRef));
+      await ref.motor.exec(SQL_IDENTIDADE);
+      expect(await descreverIdentidade(c.banco)).toEqual(await descreverIdentidade(ref.banco));
       const m = await c.banco.query<{ nome: string }>("SELECT nome FROM migracoes ORDER BY nome");
       expect(m.rows.map((r) => r.nome)).toEqual(
         expect.arrayContaining(["01_estrutura.sql", "plataforma-kit/identidade.sql"]),
       );
     } finally {
       await c.fechar();
-      await ref.close();
+      await ref.fechar();
     }
   });
 

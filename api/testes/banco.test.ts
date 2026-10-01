@@ -1,11 +1,11 @@
 /** Etapa 3: estrutura no schema orcamentos, migrador do kit, importador e backup. */
 import { afterEach, describe, expect, it } from "vitest";
 import { calcular } from "@orcamentos/compartilhado/calc";
-import { abrirBanco, type Conexao } from "../src/banco.js";
+import type { Conexao } from "../src/banco.js";
 import { exportarBase, importarBase } from "../src/dados/importador.js";
 import { sementeV1 } from "../src/dados/semente.js";
 import { prepararBanco } from "../src/migracoes.js";
-import { bancoComExemplo, bancoVazio, semLog } from "./apoio.js";
+import { bancoComExemplo, bancoNovo, bancoVazio, semLog } from "./apoio.js";
 
 let abertos: Conexao[] = [];
 afterEach(async () => {
@@ -44,7 +44,7 @@ describe("estrutura", () => {
   });
 
   it("reiniciar não reaplica a estrutura nem as migrações", async () => {
-    const c = guardar(await abrirBanco({ memoria: true }));
+    const c = guardar(await bancoNovo());
     const primeira = await prepararBanco(c, semLog);
     expect(primeira.bancoNovo).toBe(true);
     const segunda = await prepararBanco(c, semLog);

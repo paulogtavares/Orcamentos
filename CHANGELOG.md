@@ -19,6 +19,16 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
 - **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
 
+### v2.0.0-beta.5 · validação com PostgreSQL 16 e Node 24
+
+- Todos os testes rodam também num PostgreSQL real: `TESTE_PG=postgres://postgres@localhost:5432/postgres npm run test:pg`
+  cria um banco novo para cada teste (e o apaga no fim). Conferido no PostgreSQL 16.15: os mesmos testes do PGlite
+- Pacote conferido em modo produção (Node 24.21.0, `NODE_ENV=production`, `DATABASE_URL`): `MODO_TESTE` recusado com
+  aviso, todos os objetos no schema `orcamentos` (nada em `public`), primeiro administrador por `ADMIN_EMAIL` com troca
+  de senha obrigatória, reinício sem reaplicar nada, `importar.js` com um `db.json` da v1.2.1 (duas vezes, sem
+  duplicar) e os mesmos valores de setup, mensalidade, TCV e margem em todos os orçamentos
+- `api/testes/gerar-db-v1.ts`: gera um `db.json` de verdade com o servidor da v1.2.1, para ensaiar a migração
+
 ### v2.0.0-beta.4 · etapa 8: empacotamento
 
 - `npm run empacotar` gera `dist-pacote/orcamentos-vX_Y_Z-AAAA-MM-DD.zip`: `server.js` compilado com esbuild (o

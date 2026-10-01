@@ -23,7 +23,8 @@ modulo.json       manifesto para o portal
 npm install
 cp .env.example .env         # ajuste ADMIN_EMAIL/ADMIN_SENHA ou MODO_TESTE=1
 npm run dev                  # http://127.0.0.1:3333
-npm test                     # cálculo, banco, API, permissões, contrato com a v1.2.1
+npm test                     # cálculo, banco, API, permissões, contrato com a v1.2.1, telas
+TESTE_PG=postgres://postgres@localhost:5432/postgres npm run test:pg   # os mesmos testes num PostgreSQL real
 npm run typecheck && npm run lint && npm run formatacao
 npm run dev:web              # tela com recarga automática em http://localhost:5173 (API na 3333)
 npm run importar -- caminho/db.json
