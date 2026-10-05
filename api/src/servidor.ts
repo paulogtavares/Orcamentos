@@ -57,6 +57,7 @@ export async function criarServidor(o: OpcoesServidor) {
     acessoTeste: o.acessoTeste,
     restricoes: {
       ux_orcamentos_numero: "Já existe um orçamento com esse número.",
+      ux_clientes_documento: "Já existe um cliente com esse documento.",
       servicos_papel_id_fkey: "O papel de custo informado não existe na tabela de custos.",
     },
     textoValorNaoPermitido: "Valor não permitido pelas regras de orçamento.",

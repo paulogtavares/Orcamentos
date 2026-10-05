@@ -128,9 +128,12 @@ export const itemOrcamento = z
   })
   .passthrough();
 
+const uuid = z.string().uuid("Cliente inválido.");
+
 export const novoOrcamento = z
   .object({
     cliente: texto(200).optional(),
+    clienteId: uuid.nullable().optional(),
     projeto: texto(200).optional(),
     modelo: texto(60).optional(),
     responsavel: texto(160).optional(),
@@ -141,6 +144,7 @@ export const novoOrcamento = z
 export const edicaoOrcamento = z
   .object({
     cliente: texto(200).optional(),
+    clienteId: uuid.nullable().optional(),
     projeto: texto(200).optional(),
     modelo: texto(60).optional(),
     responsavel: texto(160).optional(),
@@ -171,5 +175,59 @@ export const mudancaStatus = z
   .object({
     status: z.string().min(1, "Informe o status."),
     comentario: z.string().max(2000).optional(),
+  })
+  .strip();
+
+// ------------------------------------------------------------ clientes (v2.1.0)
+
+const documento = z
+  .string()
+  .trim()
+  .max(30)
+  .nullable()
+  .refine(
+    (v) => !v || [11, 14].includes(v.replace(/\D/g, "").length),
+    "Documento deve ser um CPF (11 dígitos) ou CNPJ (14 dígitos).",
+  );
+
+export const cliente = z
+  .object({
+    nome: texto(200).min(1, "Informe o nome do cliente."),
+    documento: documento.optional(),
+    situacao: z.enum(["ativo", "inativo"]).optional(),
+  })
+  .strip();
+
+export const importacaoClientes = z
+  .object({
+    /** conteúdo do arquivo (JSON ou CSV) ou a lista já lida */
+    conteudo: z.union([z.string().max(10_000_000), z.array(z.object({}).passthrough()), z.object({}).passthrough()]),
+    arquivo: z.string().max(200).optional(),
+    confirmar: z.boolean().optional(),
+  })
+  .strip();
+
+export const ligacao = z
+  .object({
+    grupos: z
+      .array(
+        z.object({
+          textos: z.array(z.string().max(200)).min(1),
+          destino: z
+            .union([
+              z.object({ clienteId: uuid }).strict(),
+              z
+                .object({
+                  novo: z.object({
+                    nome: texto(200).min(1, "Informe o nome do novo cliente."),
+                    documento: documento.optional(),
+                  }),
+                })
+                .strict(),
+            ])
+            .nullable(),
+        }),
+      )
+      .max(5000),
   })
   .strip();

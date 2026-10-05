@@ -6,7 +6,7 @@
  * iguais na leitura. Assim um db.json antigo passa pelo banco e sai no backup como entrou.
  */
 
-export type Tipo = "texto" | "numero" | "logico" | "json" | "data";
+export type Tipo = "texto" | "numero" | "logico" | "json" | "data" | "uuid";
 
 export interface Campo {
   /** nome no JSON da v1 */
@@ -20,12 +20,15 @@ export interface Campo {
   padrao?: string;
 }
 
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const cabe: Record<Tipo, (v: unknown) => boolean> = {
   texto: (v) => typeof v === "string",
   numero: (v) => typeof v === "number" && Number.isFinite(v),
   logico: (v) => typeof v === "boolean",
   json: (v) => v !== undefined,
   data: (v) => typeof v === "string" && !Number.isNaN(Date.parse(v)) && /^\d{4}-\d{2}-\d{2}T/.test(v),
+  uuid: (v) => typeof v === "string" && UUID.test(v),
 };
 
 /** Separa um objeto JSON em valores de coluna (na ordem dos campos) e extras. */
@@ -70,6 +73,7 @@ const CAST: Record<Tipo, string> = {
   logico: "boolean",
   json: "jsonb",
   data: "timestamptz",
+  uuid: "uuid",
 };
 
 /** Lista de colunas para INSERT: "a, b, c" e "$1, $2, $3" (com cast para jsonb onde precisa). */
@@ -137,6 +141,8 @@ export const CAMPOS_ORCAMENTO: readonly Campo[] = [
   { json: "status", coluna: "status", tipo: "texto", padrao: "'rascunho'" },
   { json: "validade", coluna: "validade", tipo: "texto" },
   { json: "templateId", coluna: "template_id", tipo: "texto", sempre: true },
+  // v2.1.0: ligação ao cadastro de clientes (ausente quando não ligado, como nos orçamentos da v1)
+  { json: "clienteId", coluna: "cliente_id", tipo: "uuid" },
   { json: "cambio", coluna: "cambio", tipo: "numero" },
   { json: "params", coluna: "params", tipo: "json", padrao: "'{}'::jsonb" },
   { json: "premissas", coluna: "premissas", tipo: "texto", padrao: "''" },
@@ -164,6 +170,17 @@ export const CAMPOS_ITEM: readonly Campo[] = [
   { json: "fator", coluna: "fator", tipo: "numero" },
   { json: "alocacao", coluna: "alocacao", tipo: "texto", sempre: true },
   { json: "percHoras", coluna: "perc_horas", tipo: "numero" },
+];
+
+/** Cliente do cadastro mestre (v2.1.0). */
+export const CAMPOS_CLIENTE: readonly Campo[] = [
+  { json: "id", coluna: "id", tipo: "uuid" },
+  { json: "nome", coluna: "nome", tipo: "texto" },
+  { json: "documento", coluna: "documento", tipo: "texto", sempre: true },
+  { json: "situacao", coluna: "situacao", tipo: "texto", padrao: "'ativo'" },
+  { json: "origem", coluna: "origem", tipo: "texto", padrao: "'manual'" },
+  { json: "criadoEm", coluna: "criado_em", tipo: "data", padrao: "now()" },
+  { json: "atualizadoEm", coluna: "atualizado_em", tipo: "data", padrao: "now()" },
 ];
 
 export const CAMPOS_VERSAO: readonly Campo[] = [

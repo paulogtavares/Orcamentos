@@ -32,6 +32,7 @@ async function iniciar() {
   const acessoTeste = await prepararPessoas(conexao.banco, {
     modoTeste: amb.modoTeste,
     producao: amb.producao,
+    modo: amb.acesso.modo,
     adminEmail: process.env.ADMIN_EMAIL,
     adminSenha: process.env.ADMIN_SENHA,
     log,

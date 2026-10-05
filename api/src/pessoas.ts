@@ -106,8 +106,30 @@ export async function garantirUsuariosDeTeste(banco: Banco) {
 /** Início: administrador, usuários de teste ou auditoria. Devolve o acesso de teste (se ligado). */
 export async function prepararPessoas(
   banco: Banco,
-  o: { modoTeste: boolean; producao: boolean; adminEmail?: string; adminSenha?: string; log: (m: string) => void },
+  o: {
+    modoTeste: boolean;
+    producao: boolean;
+    /** "portal": usuários e perfis vêm do portal; nada de usuário local */
+    modo?: string;
+    adminEmail?: string;
+    adminSenha?: string;
+    log: (m: string) => void;
+  },
 ) {
+  if (o.modo === "portal") {
+    // Um usuário local com o e-mail de um usuário do portal faria o kit recusar o login dele (409):
+    // no modo portal o Orçamentos não cria administrador local nem usuários de teste.
+    const ignoradas = [
+      o.adminEmail && "ADMIN_EMAIL",
+      o.adminSenha && "ADMIN_SENHA",
+      o.modoTeste && "MODO_TESTE",
+    ].filter(Boolean);
+    o.log(
+      `[acesso] AUTH_MODO=portal: usuários e perfis vêm do portal${ignoradas.length ? `; ignoradas: ${ignoradas.join(", ")}` : ""}`,
+    );
+    await auditarUsuariosDeTeste({ banco, emails: EMAILS_TESTE, senha: SENHA_TESTE, producao: o.producao, log: o.log });
+    return undefined;
+  }
   let acessoTeste: Awaited<ReturnType<typeof garantirUsuariosDeTeste>> | undefined;
   if (o.modoTeste) {
     acessoTeste = await garantirUsuariosDeTeste(banco);

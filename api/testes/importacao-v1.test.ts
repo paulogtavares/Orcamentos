@@ -28,7 +28,8 @@ describe("importação de um db.json da v1.2.1", () => {
     const c = await bancoVazio();
     try {
       await c.banco.tx(null, (t) => importarBase(t.query, validarBase(dbJson)));
-      const saida = await exportarBase(c.banco.query);
+      const { clientes, ...saida } = await exportarBase(c.banco.query);
+      expect(clientes).toEqual([]); // v2.1.0: o backup traz o cadastro de clientes; a v1.2.1 não tinha
       expect(saida).toEqual(dbJson);
       for (const o of saida.orcamentos) {
         const orig = dbJson.orcamentos.find((x: any) => x.id === o.id);
@@ -40,7 +41,8 @@ describe("importação de um db.json da v1.2.1", () => {
       }
       // reimportar não duplica
       await c.banco.tx(null, (t) => importarBase(t.query, validarBase(dbJson)));
-      expect(await exportarBase(c.banco.query)).toEqual(dbJson);
+      const { clientes: _c, ...denovo } = await exportarBase(c.banco.query);
+      expect(denovo).toEqual(dbJson);
     } finally {
       await c.fechar();
     }

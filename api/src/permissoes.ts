@@ -40,12 +40,27 @@ export const catalogo = criarCatalogo("orcamentos", [
     descricao: "Cria, altera e exclui templates.",
   },
   {
+    chave: "orcamentos.clientes.ver",
+    grupo: "Clientes",
+    nome: "Ver clientes",
+    descricao: "Vê o cadastro de clientes (cadastro mestre da plataforma).",
+  },
+  {
+    chave: "orcamentos.clientes.gerenciar",
+    grupo: "Clientes",
+    nome: "Gerenciar clientes",
+    descricao: "Cadastra, altera e inativa clientes, importa do Cronogramas e liga orçamentos ao cadastro.",
+  },
+  {
     chave: "orcamentos.backup",
     grupo: "Administração",
     nome: "Backup e restauração",
     descricao: "Baixa o backup completo e restaura a base a partir de um arquivo.",
   },
 ] as const);
+
+/** Permissão dos tokens de serviço (outros módulos lendo o cadastro); não é dada a usuários. */
+export const SERVICO_LER_CLIENTES = "orcamentos.clientes.ler";
 
 export type Permissao = (typeof catalogo.todas)[number];
 export type Usuario = UsuarioPlataforma<Permissao>;

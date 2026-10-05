@@ -85,6 +85,7 @@ export interface Orcamento extends Json {
   status: string;
   validade: string;
   templateId: string | null;
+  clienteId?: string | null;
   cambio: number;
   params: ParametrosPreco;
   premissas: string;
@@ -104,4 +105,6 @@ export interface BaseV1 {
   servicos: Servico[];
   templates: Template[];
   orcamentos: Orcamento[];
+  /** v2.1.0: cadastro de clientes (ausente nos backups da v1.2.1 e da v2.0.0) */
+  clientes?: Json[];
 }

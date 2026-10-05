@@ -11,7 +11,14 @@ describe("identidade do kit", () => {
     const ref = await bancoNovo();
     try {
       await ref.motor.exec(SQL_IDENTIDADE);
-      expect(await descreverIdentidade(c.banco)).toEqual(await descreverIdentidade(ref.banco));
+      // a única diferença permitida é a chave do módulo usuarios.cliente_id → clientes (o identidade.sql do kit
+      // deixa essa chave para a migração de cada módulo; no Orçamentos ela vem com o cadastro de clientes, v2.1.0)
+      const modulo = await descreverIdentidade(c.banco);
+      const kit = await descreverIdentidade(ref.banco);
+      const chave = "usuarios.usuarios_cliente_id_fkey";
+      expect(modulo.restricoes[chave]).toBe("FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL");
+      delete modulo.restricoes[chave];
+      expect(modulo).toEqual(kit);
       const m = await c.banco.query<{ nome: string }>("SELECT nome FROM migracoes ORDER BY nome");
       expect(m.rows.map((r) => r.nome)).toEqual(
         expect.arrayContaining(["01_estrutura.sql", "plataforma-kit/identidade.sql"]),

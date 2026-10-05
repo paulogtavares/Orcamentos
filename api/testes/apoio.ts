@@ -72,8 +72,17 @@ export async function criarUsuario(
   return r.rows[0].id;
 }
 
+export const SEGREDO_TESTE = "segredo-de-teste-da-plataforma-com-mais-de-32-caracteres";
+
 export async function servidorDeTeste(
-  o: { conexao?: Conexao; ptax?: () => Promise<{ usd: number; dataCotacao: string }> } = {},
+  o: {
+    conexao?: Conexao;
+    ptax?: () => Promise<{ usd: number; dataCotacao: string }>;
+    /** "portal": entra só com X-Plataforma-Token assinado com SEGREDO_TESTE */
+    modo?: "local" | "portal";
+    /** segredo da plataforma (rotas de serviço); padrão: SEGREDO_TESTE */
+    segredo?: string | null;
+  } = {},
 ) {
   const conexao = o.conexao ?? (await bancoComExemplo());
   const app = await criarServidor({
@@ -81,7 +90,12 @@ export async function servidorDeTeste(
     ambiente: {
       producao: false,
       modoTeste: false,
-      acesso: { modo: "local", nomeCookie: "orc_sessao", modulo: "orcamentos" },
+      acesso: {
+        modo: o.modo ?? "local",
+        nomeCookie: "orc_sessao",
+        modulo: "orcamentos",
+        ...(o.segredo === null ? {} : { segredoPlataforma: o.segredo ?? SEGREDO_TESTE }),
+      },
     },
     versao: "2.0.0-teste",
     data: "2026-09-27",

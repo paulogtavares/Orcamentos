@@ -26,6 +26,7 @@ import {
 } from "./repositorio.js";
 import { SETTINGS_GP, sementeV1 } from "./semente.js";
 import type { BaseV1 } from "./tipos.js";
+import { gravarCliente, listarClientes } from "../clientes.js";
 
 const comId = z.object({ id: z.string().min(1, "Registro sem id no arquivo.") }).passthrough();
 
@@ -38,6 +39,8 @@ export const esquemaBase = z
     servicos: z.array(comId).default([]),
     templates: z.array(comId.extend({ itens: z.array(z.object({}).passthrough()).default([]) })).default([]),
     orcamentos: z.array(comId),
+    // v2.1.0 (os backups da v1.2.1 e da v2.0.0 não têm)
+    clientes: z.array(comId).optional(),
   })
   .passthrough();
 
@@ -66,7 +69,8 @@ export async function importarBase(
   o: { substituir?: boolean; log?: (m: string) => void } = {},
 ): Promise<ResultadoImportacao> {
   if (o.substituir) {
-    for (const t of ["orcamentos", "templates", "servicos", "papeis_custo", "parametros"]) await q(`DELETE FROM ${t}`);
+    for (const t of ["orcamentos", "templates", "servicos", "papeis_custo", "parametros", "clientes"])
+      await q(`DELETE FROM ${t}`);
   }
   // bancos da v1.1.0 não tinham os percentuais de GP: mesma migração que a v1.2.1 fazia ao carregar
   const settings = { ...SETTINGS_GP, ...base.settings };
@@ -78,9 +82,22 @@ export async function importarBase(
   for (const [i, p] of base.perfis.entries()) await gravarPapel(q, p, i);
   for (const [i, s] of base.servicos.entries()) await gravarServico(q, s, i);
   for (const [i, t] of base.templates.entries()) await gravarTemplate(q, t, i);
+  for (const c of base.clientes ?? []) await gravarCliente(q, c);
+  // orçamento ligado a um cliente que não veio no arquivo: fica sem ligação (o texto do cliente continua)
+  const idsClientes = new Set((await q<{ id: string }>("SELECT id FROM clientes")).rows.map((r) => r.id));
   // a v1 guarda o mais novo primeiro: o primeiro da lista fica com a maior posição
   const n = base.orcamentos.length;
-  for (const [i, orc] of base.orcamentos.entries()) await gravarOrcamento(q, orc, { posicao: n - i });
+  for (const [i, orc] of base.orcamentos.entries()) {
+    let o2 = orc;
+    if (orc.clienteId && !idsClientes.has(String(orc.clienteId).toLowerCase())) {
+      o.log?.(
+        `[importação] ${orc.numero}: cliente ${orc.clienteId} não está no arquivo; orçamento importado sem ligação`,
+      );
+      const { clienteId: _x, ...resto } = orc;
+      o2 = resto as typeof orc;
+    }
+    await gravarOrcamento(q, o2, { posicao: n - i });
+  }
 
   return {
     parametros: Object.keys(settings).length,
@@ -100,6 +117,7 @@ export async function exportarBase(q: Consulta): Promise<BaseV1> {
     servicos: await listarServicos(q),
     templates: await listarTemplates(q),
     orcamentos: await listarOrcamentos(q),
+    clientes: (await listarClientes(q)).map(({ orcamentos: _n, ...c }) => c),
   };
 }
 

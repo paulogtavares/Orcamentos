@@ -52,6 +52,8 @@ export function snapshotItem(ctx: Contexto, sv: Servico, over: Json = {}): ItemO
 
 export interface DadosNovoOrcamento {
   cliente?: string;
+  /** cliente do cadastro (v2.1.0): o nome dele vira o texto "cliente" */
+  clienteId?: string | null;
   projeto?: string;
   modelo?: string;
   responsavel?: string;
@@ -78,6 +80,7 @@ export function novoOrcamento(
     id: novoId("orc"),
     numero,
     cliente: b.cliente || "Novo cliente",
+    ...(b.clienteId ? { clienteId: b.clienteId } : {}),
     projeto: b.projeto || tp?.nome || "Novo orçamento",
     modelo: b.modelo || tp?.modelo || "projeto",
     responsavel: b.responsavel || "",
@@ -121,6 +124,7 @@ export function exigirEditavel(o: Orcamento, mensagem = "Orçamento bloqueado pa
 
 export const CAMPOS_EDITAVEIS = [
   "cliente",
+  "clienteId",
   "projeto",
   "modelo",
   "responsavel",

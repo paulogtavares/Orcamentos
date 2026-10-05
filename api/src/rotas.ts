@@ -34,6 +34,8 @@ import type { Permissao, Usuario } from "./permissoes.js";
 import { buscarPtax } from "./ptax.js";
 import * as V from "./validacao.js";
 import { paraUsuario, protegerCustos } from "./visibilidade.js";
+import * as C from "./clientes.js";
+import { SERVICO_LER_CLIENTES } from "./permissoes.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -236,6 +238,11 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     const orc = await emTx(req, async (q) => {
       const ctx = await contexto(q);
       const tp = b.templateId ? await lerTemplate(q, b.templateId) : null;
+      if (b.clienteId) {
+        const c = await C.lerCliente(q, b.clienteId);
+        if (!c) throw new ErroApi(400, "Cliente não encontrado no cadastro.");
+        b.cliente = c.nome;
+      }
       const orc = D.novoOrcamento(ctx, b, await proximoNumero(q), tp, await listarServicos(q), nomeDe(req));
       await gravarOrcamento(q, orc, { usuarioId: usuarioDe(req).id });
       return orc;
@@ -262,8 +269,14 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
 
   app.put("/api/orcamentos/:id", P("orcamentos.editar"), async (req) => {
     const b = V.edicaoOrcamento.parse(req.body);
-    return alterar(req, (_q, orc) => {
+    return alterar(req, async (q, orc) => {
       const corpo = protegerCustos(req.usuario, orc, b);
+      // ligar ao cadastro: o nome do cliente vira o texto do orçamento; desligar (null) mantém o texto
+      if (corpo.clienteId) {
+        const c = await C.lerCliente(q, corpo.clienteId);
+        if (!c) throw new ErroApi(400, "Cliente não encontrado no cadastro.");
+        corpo.cliente = c.nome;
+      }
       if (corpo.params) exigirPrecoValido({ ...orc.params, ...corpo.params });
       return D.editar(orc, corpo, nomeDe(req));
     });
@@ -318,6 +331,91 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
       return c;
     });
     return reply.code(201).send(paraUsuario(req.usuario, await lerOrcamento(consultar, copia.id), "orcamento"));
+  });
+
+  // ------------------------------------------------------------ clientes (v2.1.0)
+
+  // quem edita orçamentos também lista, para escolher o cliente
+  app.get(
+    "/api/clientes",
+    P("orcamentos.clientes.ver", "orcamentos.clientes.gerenciar", "orcamentos.editar"),
+    async () => C.listarClientes(consultar, true),
+  );
+  app.get(
+    "/api/clientes/:id",
+    P("orcamentos.clientes.ver", "orcamentos.clientes.gerenciar", "orcamentos.editar"),
+    async (req) => {
+      const c = await C.lerCliente(consultar, (req.params as { id: string }).id);
+      if (!c) throw naoEncontrado("Cliente");
+      return c;
+    },
+  );
+  app.post("/api/clientes", P("orcamentos.clientes.gerenciar"), async (req, reply) => {
+    const b = V.cliente.parse(req.body);
+    const novo = await emTx(req, (q) => C.criarCliente(q, b, usuarioDe(req).id));
+    return reply.code(201).send(await C.lerCliente(consultar, novo));
+  });
+  app.put("/api/clientes/:id", P("orcamentos.clientes.gerenciar"), async (req) => {
+    const b = V.cliente.partial().parse(req.body);
+    const idCliente = (req.params as { id: string }).id;
+    await emTx(req, (q) => C.alterarCliente(q, idCliente, b));
+    return C.lerCliente(consultar, idCliente);
+  });
+  app.delete("/api/clientes/:id", P("orcamentos.clientes.gerenciar"), async (req) => {
+    await emTx(req, (q) => C.excluirCliente(q, (req.params as { id: string }).id));
+    return { ok: true };
+  });
+
+  /** Importação do Cronogramas: sem "confirmar" devolve só a prévia; com "confirmar" grava (recalculando a prévia). */
+  app.post(
+    "/api/clientes/importacao",
+    { bodyLimit: 12 * 1024 * 1024, ...P("orcamentos.clientes.gerenciar") },
+    async (req) => {
+      const b = V.importacaoClientes.parse(req.body);
+      const { linhas, erros } = C.lerArquivoClientes(b.conteudo);
+      if (!linhas.length) throw new ErroApi(400, erros[0] ?? "Nenhum cliente no arquivo.");
+      if (!b.confirmar) return { ...(await C.previaImportacao(consultar, linhas)), erros };
+      const resumo = await emTx(req, (q) =>
+        C.aplicarImportacao(q, linhas, { usuarioId: usuarioDe(req).id, arquivo: b.arquivo, ignorados: erros.length }),
+      );
+      o.log(`[clientes] importação do Cronogramas por ${nomeDe(req)}: ${JSON.stringify(resumo)}`);
+      return { resumo, erros };
+    },
+  );
+
+  /** Ligação dos orçamentos ao cadastro: GET mostra os grupos para revisar; POST liga o que foi revisado. */
+  app.get("/api/clientes/ligacao", P("orcamentos.clientes.gerenciar"), async () => C.previaLigacao(consultar));
+  app.post("/api/clientes/ligacao", P("orcamentos.clientes.gerenciar"), async (req) => {
+    const b = V.ligacao.parse(req.body);
+    const r = await emTx(req, (q) => C.aplicarLigacao(q, b.grupos, usuarioDe(req).id));
+    o.log(`[clientes] ligação de orçamentos por ${nomeDe(req)}: ${r.ligados} orçamentos, ${r.criados} clientes novos`);
+    return r;
+  });
+
+  /**
+   * Rota interna: outros módulos (ex.: o Cronogramas) leem o cadastro mestre. Aceita só token de serviço emitido pelo
+   * portal com a permissão orcamentos.clientes.ler (o kit recusa token de usuário). ?desde=<data ISO> devolve só os
+   * alterados depois dela; sem "desde", a lista completa é a verdade (clientes excluídos somem dela).
+   */
+  app.get("/api/interno/clientes", { config: { servico: SERVICO_LER_CLIENTES } }, async (req) => {
+    const desde = (req.query as { desde?: string }).desde;
+    if (desde !== undefined && Number.isNaN(Date.parse(desde)))
+      throw new ErroApi(400, "Parâmetro desde inválido (use data ISO).");
+    const { rows } = await consultar<{
+      id: string;
+      nome: string;
+      documento: string | null;
+      situacao: string;
+      atualizado_em: Date;
+    }>(
+      `SELECT id, nome, documento, situacao, atualizado_em FROM clientes ${desde ? "WHERE atualizado_em > $1" : ""} ORDER BY lower(nome), id`,
+      desde ? [desde] : [],
+    );
+    return {
+      gerado_em: new Date().toISOString(),
+      completo: !desde,
+      clientes: rows.map((r) => ({ ...r, atualizado_em: new Date(r.atualizado_em).toISOString() })),
+    };
   });
 
   // ------------------------------------------------------------ backup e restauração

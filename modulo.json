@@ -5,7 +5,18 @@
   "prefixo": "/financeiro/orcamentos",
   "saude": "/api/saude",
   "menu": [
-    { "id": "orcamentos", "rotulo": "Orçamentos", "caminho": "/", "exigeAlguma": ["orcamentos.ver"] },
+    {
+      "id": "orcamentos",
+      "rotulo": "Orçamentos",
+      "caminho": "/",
+      "exigeAlguma": ["orcamentos.ver"]
+    },
+    {
+      "id": "clientes",
+      "rotulo": "Clientes",
+      "caminho": "/clientes",
+      "exigeAlguma": ["orcamentos.clientes.ver", "orcamentos.clientes.gerenciar"]
+    },
     {
       "id": "templates",
       "rotulo": "Templates",
@@ -28,6 +39,8 @@
   "embutido": {
     "iframe": "mesma-origem",
     "eventos": ["rota-alterada", "sessao-expirada"],
-    "rotaAlterada": { "campos": ["tipo", "modulo", "caminho", "url", "titulo"] }
+    "rotaAlterada": {
+      "campos": ["tipo", "modulo", "caminho", "url", "titulo"]
+    }
   }
 }
