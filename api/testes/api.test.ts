@@ -1,5 +1,6 @@
 /** API ponta a ponta (portado do test.js da v1.2.1, agora com login e PGlite em memória). */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { gravarOrcamento } from "../src/dados/repositorio.js";
 import { criarUsuario, servidorDeTeste } from "./apoio.js";
 
 const perto = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThan(0.01);
@@ -145,5 +146,53 @@ describe("nomenclatura (etapa 6)", () => {
     const r = await api("DELETE", "/api/papeis-custo/pf_pm");
     expect(r.status).toBe(409);
     expect(r.corpo.erro).toMatch(/papel de custo/);
+  });
+});
+
+describe("margem + imposto (v2.0.0)", () => {
+  it("orçamento, template e regras padrão recusam margem + imposto ≥ 100% com a mensagem decidida", async () => {
+    const o = (await api("POST", "/api/orcamentos", { cliente: "M", templateId: "tp_ful" })).corpo;
+    const r = await api("PUT", `/api/orcamentos/${o.id}`, {
+      params: { ...o.params, modoPreco: "margem", margem: 0.7, imposto: 0.3 },
+    });
+    expect(r.status).toBe(400);
+    expect(r.corpo.erro).toBe("Margem + imposto precisa ser menor que 100%.");
+    // só o imposto no corpo também é conferido contra a margem gravada
+    expect(
+      (await api("PUT", `/api/orcamentos/${o.id}`, { params: { modoPreco: "margem", imposto: 0.99 } })).status,
+    ).toBe(400);
+    expect(
+      (await api("PUT", `/api/orcamentos/${o.id}`, { params: { ...o.params, modoPreco: "markup", margem: 1.5 } }))
+        .status,
+    ).toBe(200);
+    const t = await api("POST", "/api/templates", {
+      nome: "Ruim",
+      params: { modoPreco: "margem", margem: 0.85, imposto: 0.15 },
+      itens: [],
+    });
+    expect(t.status).toBe(400);
+    expect(t.corpo.erro).toMatch(/margem \+ imposto precisa ser menor que 100%/i);
+    expect(
+      (await api("PUT", "/api/settings", { modoPrecoPadrao: "margem", margemAlvo: 0.9, impostoPadrao: 0.1 })).status,
+    ).toBe(400);
+    expect(
+      (await api("PUT", "/api/settings", { modoPrecoPadrao: "margem", margemAlvo: 0.3, impostoPadrao: 0.1 })).status,
+    ).toBe(200);
+  });
+
+  it("um orçamento antigo com margem + imposto = 100% importado da v1.2.1 continua legível; editar exige corrigir", async () => {
+    const base = (await api("GET", "/api/backup")).corpo;
+    const velho = {
+      ...base.orcamentos[0],
+      id: "orc_velho",
+      numero: "ORC-2026-9999",
+      params: { modoPreco: "margem", margem: 0.7, imposto: 0.3 },
+    };
+    await s.conexao.banco.tx(null, (t) => gravarOrcamento(t.query, velho));
+    expect((await api("GET", "/api/orcamentos/orc_velho")).status).toBe(200);
+    expect((await api("PUT", "/api/orcamentos/orc_velho", { params: velho.params })).status).toBe(400);
+    expect((await api("PUT", "/api/orcamentos/orc_velho", { params: { ...velho.params, margem: 0.3 } })).status).toBe(
+      200,
+    );
   });
 });

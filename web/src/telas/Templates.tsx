@@ -1,5 +1,5 @@
 /** Aba Templates: lista com valor de referência e editor em janela. */
-import { calcular, NATUREZAS } from "@orcamentos/compartilhado/calc";
+import { calcular, NATUREZAS, validarPrecificacao } from "@orcamentos/compartilhado/calc";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Modal, useAvisos, useSessao } from "plataforma-kit/react";
 import { useState } from "react";
@@ -218,8 +218,10 @@ function EditorTemplate({ inicial, aoFechar }: { inicial: Template; aoFechar: ()
     </label>
   );
 
+  const erroPreco = validarPrecificacao(t.params);
   function enviar() {
     if (!t.nome.trim()) return avisos.erro("Dê um nome ao template.");
+    if (erroPreco) return;
     salvar.mutate({ ...t, nome: t.nome.trim() }, { onSuccess: aoFechar });
   }
 
@@ -269,6 +271,11 @@ function EditorTemplate({ inicial, aoFechar }: { inicial: Template; aoFechar: ()
         {campoNum("gmvMes", "GMV / mês")}
         {campoNum("feeGmv", "Fee GMV %")}
       </div>
+      {erroPreco && (
+        <div className="erro-bloco" role="alert">
+          {erroPreco.charAt(0).toUpperCase() + erroPreco.slice(1)}.
+        </div>
+      )}
       <div className="rotulo-campo">Itens</div>
       <div className="tabela rolagem">
         <table className="tabela-itens">
@@ -398,7 +405,7 @@ function EditorTemplate({ inicial, aoFechar }: { inicial: Template; aoFechar: ()
         <button className="botao" onClick={aoFechar}>
           Cancelar
         </button>
-        <button className="botao botao-primario" disabled={salvar.isPending} onClick={enviar}>
+        <button className="botao botao-primario" disabled={salvar.isPending || !!erroPreco} onClick={enviar}>
           Salvar template
         </button>
       </div>

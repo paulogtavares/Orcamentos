@@ -3,7 +3,7 @@
  * ferramentas com o fluxo de status, itens por natureza, premissas, dados, precificação e resumo.
  * Salva sozinho 700 ms depois da última alteração.
  */
-import { STATUS, TRANSICOES, type Status } from "@orcamentos/compartilhado/calc";
+import { STATUS, TRANSICOES, validarPrecificacao, type Status } from "@orcamentos/compartilhado/calc";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, FileDown, History, MoreHorizontal, Plus, RefreshCw } from "lucide-react";
 import { useAvisos, useSessao } from "plataforma-kit/react";
@@ -134,9 +134,17 @@ function EditorOrcamento({ original, base }: { original: Orcamento; base: Base }
 
   const alterar = (mudanca: Partial<Orcamento>) => {
     if (travado) return;
-    setOrc((x) => ({ ...x, ...mudanca }));
-    setSituacao("Alterações pendentes…");
+    const novo = { ...atual.current, ...mudanca };
+    setOrc(novo);
+    atual.current = novo;
     if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    // com margem + imposto ≥ 100% o preço não existe: não salva até a precificação voltar a ser válida
+    if (validarPrecificacao(novo.params)) {
+      setSituacao("Não salvo: ajuste a precificação");
+      return;
+    }
+    setSituacao("Alterações pendentes…");
     timer.current = setTimeout(salvar, 700);
   };
   const alterarParam = (k: string, valor: unknown) => alterar({ params: { ...orc.params, [k]: valor } });
@@ -344,6 +352,7 @@ function EditorOrcamento({ original, base }: { original: Orcamento; base: Base }
       />
     </label>
   );
+  const erroPreco = validarPrecificacao(p);
   const horasPorPapel = Object.entries(v.horasPerfil).sort((a, b) => b[1].setup + b[1].mes - (a[1].setup + a[1].mes));
 
   return (
@@ -556,6 +565,11 @@ function EditorOrcamento({ original, base }: { original: Orcamento; base: Base }
                 </>
               )}
               {campoPct("imposto", "Impostos %", 0.01)}
+              {erroPreco && (
+                <div className="erro-bloco" role="alert" style={{ gridColumn: "1/-1", margin: 0 }}>
+                  {erroPreco.charAt(0).toUpperCase() + erroPreco.slice(1)}. As alterações não são salvas até corrigir.
+                </div>
+              )}
               {veCustos && campoPct("contingencia", "Contingência %")}
               {veCustos && (
                 <label className="campo">

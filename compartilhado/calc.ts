@@ -310,3 +310,22 @@ export function validarTransicao(
   if (!(orc.itens || []).length && novo !== "rascunho") return "Adicione itens ao orçamento antes de mudar o status.";
   return null;
 }
+
+/**
+ * Regra de preço válido (v2.0.0): no modo margem, margem + imposto precisa ser menor que 100%; no modo markup,
+ * o imposto precisa ser menor que 100% (o markup pode passar de 100%). Com a soma em 100% ou mais, o preço não
+ * existe (divisão por zero ou preço negativo); a v1.2.1 aceitava e gerava preço astronômico ou zero.
+ * Na v1.2.1, 70% + 30% gerava preço astronômico porque o cálculo faz 1 − 0,7 − 0,3 = 5,55e-17 (não zero).
+ * Tolerância: percentuais que somam 100% mas ficam um fio abaixo de 1 em ponto flutuante (ex.: 0,15% + 99,85%,
+ * um de 780 casos com duas casas decimais) também contam como 100%.
+ */
+export const MSG_MARGEM_IMPOSTO = "margem + imposto precisa ser menor que 100%";
+export const MSG_IMPOSTO = "imposto precisa ser menor que 100%";
+const QUASE_UM = 1 - 1e-9;
+
+export function validarPrecificacao(p: { modoPreco?: unknown; margem?: unknown; imposto?: unknown }): string | null {
+  const margem = Number(p.margem) || 0;
+  const imposto = Number(p.imposto) || 0;
+  if (p.modoPreco === "markup") return imposto >= QUASE_UM ? MSG_IMPOSTO : null;
+  return margem + imposto >= QUASE_UM ? MSG_MARGEM_IMPOSTO : null;
+}

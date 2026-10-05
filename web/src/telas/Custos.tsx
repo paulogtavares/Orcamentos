@@ -1,6 +1,7 @@
 /** Aba Custos e parâmetros: papéis de custo, dólar e regras de preço. */
 import { Plus, Trash2 } from "lucide-react";
 import { useAvisos, useSessao } from "plataforma-kit/react";
+import { validarPrecificacao } from "@orcamentos/compartilhado/calc";
 import { useState } from "react";
 import { cliente } from "../api";
 import { usePedirTexto } from "../componentes";
@@ -72,6 +73,11 @@ export function Custos() {
     )
       excluirPapel.mutate(p.id);
   }
+  const erroPreco = validarPrecificacao({
+    modoPreco: regras.modoPrecoPadrao,
+    margem: regras.margemAlvo / 100,
+    imposto: regras.impostoPadrao / 100,
+  });
   const salvarRegras = () =>
     salvarParametros.mutate({
       margemAlvo: regras.margemAlvo / 100,
@@ -283,9 +289,18 @@ export function Custos() {
                   />
                 </label>
               </div>
+              {erroPreco && (
+                <div className="erro-bloco" role="alert" style={{ margin: 0 }}>
+                  Margem alvo e impostos padrão: {erroPreco}.
+                </div>
+              )}
               {gerenciar && (
                 <div>
-                  <button className="botao botao-primario" disabled={salvarParametros.isPending} onClick={salvarRegras}>
+                  <button
+                    className="botao botao-primario"
+                    disabled={salvarParametros.isPending || !!erroPreco}
+                    onClick={salvarRegras}
+                  >
                     Salvar regras
                   </button>
                 </div>

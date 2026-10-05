@@ -3,7 +3,7 @@
 Precificação de Projetos, Fullcommerce e Fulfillment · Infracommerce. Módulo da plataforma
 (id `orcamentos`, prefixo no portal `/financeiro/orcamentos`).
 
-**Estado:** em equalização (v2.0.0). A v1.2.1 continua sendo a versão em uso até a v2.0.0 final.
+**Estado:** v2.0.0. Vai para produção já em modo portal (`AUTH_MODO=portal`), atrás do portal da plataforma.
 
 ## Estrutura
 
@@ -13,7 +13,7 @@ compartilhado/    calc.ts (motor de cálculo, usado pelo api e pelo web) e teste
 api/src/          servidor Fastify: rotas, regras (dominio.ts), permissões, visibilidade de custos
 api/testes/       testes de API com PGlite em memória (inclui contrato e importação da v1.2.1)
 db/               01_estrutura.sql e migracoes/ (identidade vem do kit)
-legado/           código da v1.2.1, só para os testes de paridade (sai na v2.0.0 final)
+legado/           código da v1.2.1, referência dos testes de paridade e de contrato (não entra no pacote)
 modulo.json       manifesto para o portal
 ```
 
@@ -42,7 +42,9 @@ Para rodar ao lado da v1.2.1 no mesmo computador, use outra porta (`PORT=4333`).
 
 ## Kit da plataforma
 
-Instalado direto do GitHub pela tag: `"plataforma-kit": "github:paulogtavares/plataforma-kit#v1.4.0"`.
+Instalado direto do GitHub pela tag: `"plataforma-kit": "github:paulogtavares/plataforma-kit#v1.5.1"`. Para
+atualizar: `npm install "plataforma-kit@github:paulogtavares/plataforma-kit#vX.Y.Z"` e conferir com
+`node -p "require('./node_modules/plataforma-kit/package.json').version"` (trocar a tag no `package.json` não basta).
 O `prepare` do kit compila o `dist/` na instalação. Precisa de acesso ao repositório só quem compila a partir do
 código-fonte; o pacote de entrega já leva o kit compilado. Se o lockfile pedir SSH:
 `git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"`.

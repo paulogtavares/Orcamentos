@@ -196,6 +196,17 @@ describe("editor", () => {
   });
 });
 
+describe("precificação inválida (v2.0.0)", () => {
+  it("margem + imposto = 100% mostra o aviso no editor", () => {
+    montar(
+      "/orcamentos/orc_1",
+      base({ ...orcCompleto, params: { modoPreco: "margem", margem: 0.7, imposto: 0.3 } }, true),
+      TODAS,
+    );
+    expect(screen.getByRole("alert").textContent).toMatch(/Margem \+ imposto precisa ser menor que 100%/);
+  });
+});
+
 describe("proposta", () => {
   it("visão do cliente: grupo somado (Squad Dev), sem custo nem margem, mesmo total para os dois perfis", () => {
     const a = montar("/orcamentos/orc_1/proposta", base(orcCompleto, true), TODAS);

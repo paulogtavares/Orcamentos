@@ -1,6 +1,6 @@
 # Histórico de versões
 
-## v2.0.0 (em andamento) · equalização tecnológica
+## v2.0.0 · 2026-10-05 · equalização tecnológica
 
 Reescrita na stack padrão da plataforma (Node 24, TypeScript, Fastify 5, PostgreSQL, React 19),
 mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do documento
@@ -18,6 +18,24 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 - **`DATA_DIR`** virou **`DADOS_DIR`** (o nome antigo ainda funciona nesta versão, com aviso).
 - **Produção** (`NODE_ENV=production`) exige `DATABASE_URL`.
 - **Erros da API** agora vêm como `{ erro, codigo }` (antes `{ error }`); o código aparece também no log.
+
+### v2.0.0 final
+
+- **plataforma-kit 1.5.1** (`npm install "plataforma-kit@github:paulogtavares/plataforma-kit#v1.5.1"`, versão conferida
+  em `node_modules`). Sai o contorno provisório do tema escuro: o kit corrigiu o botão primário (`--texto-sobre-tinta`).
+  Contraste medido no navegador: 16,3:1 no claro, 15,2:1 no escuro do sistema e no escuro forçado pelo portal
+- **Mudança de comportamento: margem + imposto ≥ 100% é recusado.** No modo margem, a soma de margem e imposto
+  precisa ser menor que 100%; no modo markup, o imposto precisa ser menor que 100% (o markup pode passar de 100%).
+  A API responde 400 com "Margem + imposto precisa ser menor que 100%." no orçamento, no template e nas regras de
+  preço padrão; as telas mostram o aviso na hora e o editor não salva até corrigir. Na v1.2.1, 70% + 30% gerava preço
+  astronômico (o cálculo faz 1 − 0,7 − 0,3 = 5,55e-17, não zero). A regra tem tolerância: 780 combinações digitadas que
+  somam 100% (ex.: 0,15% + 99,85%) ficam um fio abaixo de 1 em ponto flutuante e também são recusadas. O motor de
+  cálculo não mudou (paridade com a v1.2.1); orçamentos antigos com essa combinação continuam abrindo, e salvar
+  exige corrigir a precificação
+- **Publicação**: o Orçamentos vai para produção já em modo portal (decisão de 03/10/2026, Plano 4); sem validação
+  isolada no Railway. Em produção, não cadastre usuários locais: o portal é o dono dos usuários
+- `legado/` (código da v1.2.1) fica no repositório como referência dos testes de paridade e de contrato; não entra no
+  pacote
 
 ### v2.0.0-beta.5 · validação com PostgreSQL 16 e Node 24
 
@@ -110,9 +128,8 @@ mantendo as mesmas regras de cálculo e as mesmas rotas de API. Plano 2 do docum
 
 - `compartilhado/calc.ts`: tradução fiel do `calc.js`, com os testes da planilha H Stern,
   paridade exata com o original em 5.000 orçamentos e casos de borda
-- **Pendência de decisão**: com margem + imposto somando exatamente 100% (ex.: 70% + 30%), o
-  ponto flutuante gera um preço astronômico em vez de zero. Comportamento herdado da v1.2.1,
-  mantido e documentado em teste até decisão
+- Com margem + imposto somando exatamente 100% (ex.: 70% + 30%), o ponto flutuante gerava um preço
+  astronômico em vez de zero, como na v1.2.1. Resolvido na v2.0.0 final: a combinação passa a ser recusada
 
 ### v2.0.0-alpha.0 · etapa 0: marco inicial
 

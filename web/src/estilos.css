@@ -1022,15 +1022,3 @@ tr.nivel-1 td .secundario {
     flex: none;
   }
 }
-
-/* CONTORNO até o kit corrigir (pedido registrado no CHANGELOG): o .botao-primario do kit usa --texto-invertido
-   (#fff nos dois temas) sobre var(--tinta), que é clara no tema escuro: texto branco sobre fundo claro.
-   Mesma regra da v1.2.1 (color: var(--papel)), só no botão. Remover quando o kit corrigir. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .botao-primario {
-    color: var(--papel);
-  }
-}
-:root[data-theme="dark"] .botao-primario {
-  color: var(--papel);
-}

@@ -119,7 +119,8 @@ describe("TCV e margem", () => {
 
   it("HERDADO da v1.2.1: margem 70% + imposto 30% dá preço astronômico (1 − 0,7 − 0,3 = 5,55e-17 em ponto flutuante)", () => {
     // Mantido igual à v1.2.1 de propósito (regra de cálculo não muda sem decisão).
-    // Pendência registrada no CHANGELOG: tratar denominador ≤ 1e-9 como zero.
+    // O cálculo continua igual (paridade); desde a v2.0.0 a API e as telas recusam essa combinação
+    // (validarPrecificacao), então ela não chega mais a um orçamento novo.
     expect(precoDe(100, { modoPreco: "margem", margem: 0.7, imposto: 0.3 })).toBeGreaterThan(1e17);
   });
 

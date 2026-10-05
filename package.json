@@ -1,7 +1,7 @@
 {
   "name": "orcamentos",
-  "version": "2.0.0-beta.5",
-  "buildDate": "2026-10-01",
+  "version": "2.0.0",
+  "buildDate": "2026-10-05",
   "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
   "private": true,
   "type": "module",
@@ -28,7 +28,7 @@
     "test:pg": "vitest run"
   },
   "dependencies": {
-    "plataforma-kit": "github:paulogtavares/plataforma-kit#v1.4.0"
+    "plataforma-kit": "github:paulogtavares/plataforma-kit#v1.5.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

@@ -28,6 +28,7 @@ import {
   proximoNumero,
 } from "./dados/repositorio.js";
 import type { Json, Orcamento, Parametros } from "./dados/tipos.js";
+import { validarPrecificacao } from "@orcamentos/compartilhado/calc";
 import * as D from "./dominio.js";
 import type { Permissao, Usuario } from "./permissoes.js";
 import { buscarPtax } from "./ptax.js";
@@ -48,6 +49,12 @@ export interface OpcoesRotas {
 }
 
 const usuarioDe = (req: FastifyRequest) => req.usuario!;
+
+/** Recusa (400) parâmetros de preço em que o preço não existe: margem + imposto ≥ 100% (ou imposto ≥ 100% no markup). */
+function exigirPrecoValido(p: Json) {
+  const erro = validarPrecificacao(p);
+  if (erro) throw new ErroApi(400, erro.charAt(0).toUpperCase() + erro.slice(1) + ".");
+}
 
 /** preHandler: exige ao menos uma das permissões (administrador tem todas). Validado no servidor. */
 const exigir =
@@ -84,6 +91,8 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     return emTx(req, async (q) => {
       const atual = await lerParametros(q);
       const { cambio, ...resto } = b;
+      const final = { ...atual, ...resto };
+      exigirPrecoValido({ modoPreco: final.modoPrecoPadrao, margem: final.margemAlvo, imposto: final.impostoPadrao });
       const novo: Parametros = { ...resto };
       if (cambio) novo.cambio = { ...(atual.cambio ?? { usd: 0 }), ...cambio } as Parametros["cambio"];
       await gravarParametros(q, novo);
@@ -194,6 +203,7 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
   app.post("/api/templates", P("orcamentos.templates.gerenciar"), async (req, reply) => {
     const b = V.template.partial().required({ nome: true }).parse(req.body);
     const novo = { modelo: "projeto", descricao: "", params: {}, itens: [], ...b, id: D.novoId("tp") };
+    exigirPrecoValido(novo.params);
     await emTx(req, (q) => gravarTemplate(q, novo));
     return reply.code(201).send(await lerTemplate(consultar, novo.id));
   });
@@ -202,6 +212,7 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
     return emTx(req, async (q) => {
       const atual = await lerTemplate(q, id(req));
       if (!atual) throw naoEncontrado();
+      if (b.params) exigirPrecoValido(b.params);
       await gravarTemplate(q, { ...atual, ...b, id: atual.id });
       return lerTemplate(q, atual.id);
     });
@@ -251,7 +262,11 @@ export async function rotasOrcamentos(app: FastifyInstance, o: OpcoesRotas) {
 
   app.put("/api/orcamentos/:id", P("orcamentos.editar"), async (req) => {
     const b = V.edicaoOrcamento.parse(req.body);
-    return alterar(req, (_q, orc) => D.editar(orc, protegerCustos(req.usuario, orc, b), nomeDe(req)));
+    return alterar(req, (_q, orc) => {
+      const corpo = protegerCustos(req.usuario, orc, b);
+      if (corpo.params) exigirPrecoValido({ ...orc.params, ...corpo.params });
+      return D.editar(orc, corpo, nomeDe(req));
+    });
   });
 
   app.delete("/api/orcamentos/:id", P("orcamentos.editar"), async (req) =>
