@@ -4,6 +4,7 @@
  *   orcamentos/
  *     server.js        servidor compilado (esbuild), com o plataforma-kit embutido: o deploy não precisa do GitHub
  *     importar.js      importa um db.json da v1.2.1: node --env-file-if-exists=.env importar.js caminho/db.json
+ *     remover-usuarios-locais.js  antes do modo portal: lista (e, com --confirmar, remove) os usuários do modo local
  *     public/          tela compilada (Vite)
  *     db/              estrutura e migrações (SQL legível)
  *     modulo.json      manifesto para o portal
@@ -42,6 +43,7 @@ passo("servidor (esbuild)");
 for (const [entrada, arquivo] of [
   ["api/src/principal.ts", "server.js"],
   ["api/src/importar.ts", "importar.js"],
+  ["api/src/removerUsuariosLocais.ts", "remover-usuarios-locais.js"],
 ]) {
   await build({
     entryPoints: [join(raiz, entrada)],

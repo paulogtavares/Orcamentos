@@ -35,6 +35,11 @@ outros módulos consultam).
 - **Modo portal**: com `AUTH_MODO=portal`, o início não cria administrador local (`ADMIN_EMAIL`) nem usuários de teste
   (`MODO_TESTE`) e avisa no log que foram ignorados. Um usuário local com o mesmo e-mail de um usuário do portal faria
   o kit recusar o login dele (409)
+- **Usuários do modo local antes do modo portal**: se o banco já rodou em modo local (ex.: um teste com
+  `ADMIN_EMAIL`), o início em modo portal lista no log os usuários com senha local, porque quem entrar pelo portal com
+  o mesmo e-mail será recusado. `node remover-usuarios-locais.js` lista e, com `--confirmar`, remove (orçamentos,
+  histórico e clientes não mudam). Conferido num banco de teste em PostgreSQL: antes, 409 para o Paulo; depois, acesso
+  normal
 - O backup passa a levar `clientes` e o `clienteId` dos orçamentos; backups da v1.2.1 e da v2.0.0 continuam restauráveis
 - Perfil de teste "Financeiro" com `orcamentos.clientes.gerenciar`
 

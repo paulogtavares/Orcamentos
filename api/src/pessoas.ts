@@ -129,6 +129,12 @@ export async function prepararPessoas(
       `[acesso] AUTH_MODO=portal: usuários e perfis vêm do portal${ignoradas.length ? `; ignoradas: ${ignoradas.join(", ")}` : ""}`,
     );
     await auditarUsuariosDeTeste({ banco, emails: EMAILS_TESTE, senha: SENHA_TESTE, producao: o.producao, log: o.log });
+    const locais = await usuariosLocais(banco);
+    if (locais.length)
+      o.log(
+        `[aviso] ${locais.length} usuário(s) com senha local, de quando o módulo rodou em modo local: ${locais.join(", ")}. ` +
+          "Quem entrar pelo portal com o mesmo e-mail será recusado. Remova com: node remover-usuarios-locais.js --confirmar",
+      );
     return undefined;
   }
   let acessoTeste: Awaited<ReturnType<typeof garantirUsuariosDeTeste>> | undefined;
@@ -140,4 +146,18 @@ export async function prepararPessoas(
   }
   await garantirAdministrador(banco, { email: o.adminEmail, senha: o.adminSenha, log: o.log });
   return acessoTeste;
+}
+
+/** Usuários criados no modo local (têm senha própria): no modo portal, bloqueiam quem entra com o mesmo e-mail. */
+export async function usuariosLocais(banco: Banco) {
+  const { rows } = await banco.query<{ email: string }>(
+    "SELECT email FROM usuarios WHERE senha_hash IS NOT NULL ORDER BY email",
+  );
+  return rows.map((r) => r.email);
+}
+
+/** Remove os usuários do modo local (e as sessões deles, em cascata). Orçamentos, histórico e clientes não mudam. */
+export async function removerUsuariosLocais(banco: Banco) {
+  const r = await banco.query("DELETE FROM usuarios WHERE senha_hash IS NOT NULL");
+  return r.rowCount;
 }

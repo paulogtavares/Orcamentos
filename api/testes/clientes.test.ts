@@ -5,7 +5,7 @@ import { migrar } from "plataforma-kit/migrador";
 import { scriptIdentidade } from "plataforma-kit/identidade";
 import { normalizarNome, parecidos } from "../src/clientes.js";
 import { lerScripts, prepararBanco, TABELA_REFERENCIA } from "../src/migracoes.js";
-import { prepararPessoas } from "../src/pessoas.js";
+import { prepararPessoas, removerUsuariosLocais, usuariosLocais } from "../src/pessoas.js";
 import { SCHEMA } from "../src/banco.js";
 import {
   bancoComExemplo,
@@ -358,6 +358,36 @@ describe("AUTH_MODO=portal", () => {
       );
     } finally {
       await c.fechar();
+    }
+  });
+
+  it("usuários do modo local: o início avisa quais são, e a remoção libera o login pelo portal", async () => {
+    const s = await servidorDeTeste({ conexao: await bancoComExemplo(), modo: "portal" });
+    try {
+      await criarUsuario(s.conexao, "paulo@infracommerce.com", { administrador: true });
+      const avisos: string[] = [];
+      await prepararPessoas(s.conexao.banco, {
+        modo: "portal",
+        modoTeste: false,
+        producao: true,
+        log: (m) => avisos.push(m),
+      });
+      expect(avisos.join("\n")).toMatch(
+        /1 usuário\(s\) com senha local.*paulo@infracommerce\.com.*remover-usuarios-locais/,
+      );
+      const t = await emitirToken(
+        { id: ID_HSTERN, email: "paulo@infracommerce.com", tipo: "interno", permissoes: ["orcamentos.ver"] },
+        "orcamentos",
+        { segredo: SEGREDO_TESTE },
+      );
+      const entrar = async () =>
+        (await s.app.inject({ url: "/api/orcamentos", headers: { "x-plataforma-token": t } })).statusCode;
+      expect(await entrar()).toBe(409);
+      expect(await removerUsuariosLocais(s.conexao.banco)).toBe(1);
+      expect(await usuariosLocais(s.conexao.banco)).toEqual([]);
+      expect(await entrar()).toBe(200);
+    } finally {
+      await s.fechar();
     }
   });
 
