@@ -1,7 +1,7 @@
 {
   "name": "orcamentos",
-  "version": "2.1.0-alpha.1",
-  "buildDate": "2026-10-05",
+  "version": "2.1.0",
+  "buildDate": "2026-10-06",
   "description": "Orçamentos · precificação de Projetos, Fullcommerce e Fulfillment (Infracommerce)",
   "private": true,
   "type": "module",

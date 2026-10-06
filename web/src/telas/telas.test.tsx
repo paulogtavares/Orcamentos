@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Testes de tela: o que cada perfil vê na lista, no editor e na proposta. */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ProvedorAvisos, ProvedorSessao, type UsuarioTela } from "plataforma-kit/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -254,6 +254,32 @@ describe("clientes (v2.1.0)", () => {
     montar("/orcamentos/orc_1", comClientes(orcCompleto, true), TODAS);
     expect((screen.getByLabelText("Cliente do cadastro") as HTMLSelectElement).value).toBe("");
     expect((screen.getByLabelText("Nome do cliente (texto livre)") as HTMLInputElement).value).toBe("H Stern");
+  });
+});
+
+describe("novo orçamento com cliente do cadastro (v2.1.0)", () => {
+  it("envia o clienteId escolhido no seletor", async () => {
+    const enviados: unknown[] = [];
+    const original = cliente.post;
+    cliente.post = (async (url: string, corpo: unknown) => {
+      enviados.push({ url, corpo });
+      throw new Error("parar aqui");
+    }) as typeof cliente.post;
+    try {
+      const ID = "11111111-1111-4111-8111-111111111111";
+      const b = {
+        ...base(orcCompleto, true),
+        clientes: [{ id: ID, nome: "H Stern", documento: null, situacao: "ativo" as const, origem: "manual" as const }],
+      };
+      montar("/", b, TODAS);
+      fireEvent.click(screen.getAllByRole("button", { name: /Novo orçamento/ })[0]);
+      fireEvent.change(screen.getByDisplayValue("Fora do cadastro (texto livre)"), { target: { value: ID } });
+      fireEvent.click(screen.getByRole("button", { name: "Criar orçamento" }));
+      await new Promise((r) => setTimeout(r, 50));
+      expect(enviados[0]).toMatchObject({ url: "/api/orcamentos", corpo: { clienteId: ID } });
+    } finally {
+      cliente.post = original;
+    }
   });
 });
 

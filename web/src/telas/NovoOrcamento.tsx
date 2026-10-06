@@ -26,6 +26,7 @@ export function NovoOrcamento({ templateId, aoFechar }: { templateId?: string; a
     cliente.post<Orcamento>("/api/orcamentos", {
       projeto: d.projeto.trim(),
       cliente: d.cliente.trim(),
+      clienteId: d.clienteId || null,
       responsavel: d.responsavel.trim(),
       templateId: d.inicio === "tpl" ? d.templateId : "",
       modelo: d.modelo,

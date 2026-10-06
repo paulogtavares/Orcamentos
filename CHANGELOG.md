@@ -1,5 +1,43 @@
 # Histórico de versões
 
+## v2.1.0 · 2026-10-06 · cadastro de clientes
+
+Cadastro mestre de clientes da plataforma (Plano 4: o Financeiro / Orçamentos é o dono do cadastro; o portal e os
+outros módulos consultam).
+
+### Atenção ao atualizar
+
+- Migração `02_clientes` (aplicada sozinha no início): tabela `clientes`, `orcamentos.cliente_id`, chave estrangeira
+  `usuarios.cliente_id → clientes` e o registro `importacoes_clientes`. Nada existente muda: todos os orçamentos
+  continuam com o cliente como texto até serem ligados ao cadastro.
+- Ordem sugerida: **1)** importar os clientes do Cronogramas; **2)** ligar os orçamentos (Clientes → Revisar e ligar).
+- O Cronogramas precisa exportar os clientes (JSON ou CSV) com `id` (o uuid de lá) e `nome`; `documento` (ou
+  `cnpj`/`cpf`) e situação (`situacao`, `status` ou `ativo`) são opcionais.
+
+### Novidades
+
+- **Clientes** no Financeiro: aba e tela com busca, filtro por situação, documento (CPF ou CNPJ, único) e quantidade
+  de orçamentos; permissões `orcamentos.clientes.ver` e `orcamentos.clientes.gerenciar`; item no manifesto. Quem edita
+  orçamentos lista os clientes para escolher. Cliente com orçamentos não pode ser excluído: inative
+- **Importação do Cronogramas** com prévia (criar, atualizar, unir, sem mudança e linhas com problema) antes de gravar.
+  Os ids do Cronogramas são mantidos, porque os usuários externos já apontam para eles. Um cliente daqui com o mesmo
+  documento ou o mesmo nome é **unido** ao do Cronogramas: os orçamentos passam a apontar para o id de lá e o registro
+  local sai. Reimportar o mesmo arquivo não muda nada
+- **Ligação dos orçamentos ao cadastro**: os nomes escritos à mão são agrupados sem acentos, pontuação e sufixos
+  (Ltda, S.A., ME…), com a sugestão do cadastro e o aviso de grupos parecidos (possíveis duplicados). Nada é ligado
+  antes da revisão; escolher o mesmo destino junta os grupos
+- O orçamento ganha `clienteId`; o texto `cliente` continua sendo o nome mostrado na proposta. Ligar ou renomear um
+  cliente atualiza só os orçamentos **ainda não enviados**: enviados, aceitos e perdidos mantêm o nome que o cliente viu
+- Editor e novo orçamento escolhem o cliente do cadastro (ou texto livre, enquanto o cliente não estiver cadastrado)
+- **Rota interna** `GET /api/interno/clientes` para outros módulos (ex.: o Cronogramas), aceita **só** com token de
+  serviço do portal com `orcamentos.clientes.ler` (kit 1.5.0); `?desde=<data ISO>` devolve só os alterados. Sem
+  `SEGREDO_PLATAFORMA`, responde 503
+- **Modo portal**: com `AUTH_MODO=portal`, o início não cria administrador local (`ADMIN_EMAIL`) nem usuários de teste
+  (`MODO_TESTE`) e avisa no log que foram ignorados. Um usuário local com o mesmo e-mail de um usuário do portal faria
+  o kit recusar o login dele (409)
+- O backup passa a levar `clientes` e o `clienteId` dos orçamentos; backups da v1.2.1 e da v2.0.0 continuam restauráveis
+- Perfil de teste "Financeiro" com `orcamentos.clientes.gerenciar`
+
 ## v2.0.0 · 2026-10-05 · equalização tecnológica
 
 Reescrita na stack padrão da plataforma (Node 24, TypeScript, Fastify 5, PostgreSQL, React 19),
