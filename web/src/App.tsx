@@ -19,7 +19,9 @@ import { cliente, embutido } from "./api";
 import { Carregando } from "./componentes";
 import { num } from "./formato";
 import { useBase } from "./dados";
+import { Clientes } from "./telas/Clientes";
 import { Custos } from "./telas/Custos";
+import { Ligacao } from "./telas/Ligacao";
 import { Editor } from "./telas/Editor";
 import { Lista } from "./telas/Lista";
 import { Proposta } from "./telas/Proposta";
@@ -94,6 +96,7 @@ function Logado({ versao, data }: { versao: string; data: string }) {
   const base = useBase();
   const navegar = useNavigate();
   const veCustos = pode("orcamentos.custos.ver");
+  const verClientes = pode("orcamentos.clientes.ver") || pode("orcamentos.clientes.gerenciar");
 
   const itensMenu: ItemMenuUsuario[] = [
     { rotulo: "Usuários e perfis", caminho: "/usuarios", somenteAdministrador: true },
@@ -142,6 +145,11 @@ function Logado({ versao, data }: { versao: string; data: string }) {
           <Route path="/" element={<Lista />} />
           <Route path="/orcamentos/:id" element={<Editor />} />
           <Route path="/orcamentos/:id/proposta" element={<Proposta />} />
+          <Route path="/clientes" element={verClientes ? <Clientes /> : <Navigate to="/" replace />} />
+          <Route
+            path="/clientes/ligar"
+            element={pode("orcamentos.clientes.gerenciar") ? <Ligacao /> : <Navigate to="/" replace />}
+          />
           <Route path="/templates" element={<Templates />} />
           <Route path="/servicos" element={veCustos ? <Servicos /> : <Navigate to="/" replace />} />
           <Route path="/custos" element={veCustos ? <Custos /> : <Navigate to="/" replace />} />

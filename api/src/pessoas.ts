@@ -37,6 +37,7 @@ export const PERFIS_TESTE: { perfil: string; email: string; nome: string; permis
       "orcamentos.custos.ver",
       "orcamentos.custos.gerenciar",
       "orcamentos.templates.gerenciar",
+      "orcamentos.clientes.gerenciar",
     ],
   },
 ];

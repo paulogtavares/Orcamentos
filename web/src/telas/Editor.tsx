@@ -13,7 +13,7 @@ import { cliente } from "../api";
 import { BarraMargem, Selo, usePedirTexto } from "../componentes";
 import { CHAVE_BASE, useBase } from "../dados";
 import { brl, int, MODELOS, NAT, num, pct } from "../formato";
-import type { Base, Item, Orcamento } from "../tipos";
+import type { Base, Cliente, Item, Orcamento } from "../tipos";
 import { visao } from "../visao";
 import { Catalogo } from "./Catalogo";
 import { Historico } from "./Historico";
@@ -522,7 +522,7 @@ function EditorOrcamento({ original, base }: { original: Orcamento; base: Base }
             </div>
             <div className="cartao-corpo grade-campos" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {campoTexto("projeto", "Projeto", "text", { gridColumn: "1/-1" })}
-              {campoTexto("cliente", "Cliente")}
+              <CampoCliente orc={orc} clientes={base.clientes ?? []} travado={travado} aoMudar={(m) => alterar(m)} />
               <label className="campo">
                 <span className="rotulo-campo">Modelo</span>
                 <select
@@ -685,5 +685,57 @@ function EditorOrcamento({ original, base }: { original: Orcamento; base: Base }
       )}
       {texto.elemento}
     </>
+  );
+}
+
+/** Cliente do orçamento: do cadastro (v2.1.0) ou, enquanto não ligado, o texto livre da v1. */
+function CampoCliente({
+  orc,
+  clientes,
+  travado,
+  aoMudar,
+}: {
+  orc: Orcamento;
+  clientes: Cliente[];
+  travado: boolean;
+  aoMudar: (m: Partial<Orcamento>) => void;
+}) {
+  const opcoes = clientes.filter((c) => c.situacao === "ativo" || c.id === orc.clienteId);
+  const ligado = !!orc.clienteId;
+  return (
+    <label className="campo">
+      <span className="rotulo-campo">Cliente</span>
+      {clientes.length > 0 && (
+        <select
+          className="entrada"
+          value={orc.clienteId ?? ""}
+          disabled={travado}
+          aria-label="Cliente do cadastro"
+          onChange={(e) => {
+            const c = clientes.find((x) => x.id === e.target.value);
+            aoMudar(c ? { clienteId: c.id, cliente: c.nome } : { clienteId: null });
+          }}
+        >
+          <option value="">Sem ligação (texto livre)</option>
+          {opcoes.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}
+              {c.situacao === "inativo" ? " (inativo)" : ""}
+            </option>
+          ))}
+        </select>
+      )}
+      {!ligado && (
+        <input
+          className="entrada"
+          style={clientes.length ? { marginTop: 4 } : undefined}
+          value={orc.cliente ?? ""}
+          disabled={travado}
+          placeholder="Nome do cliente"
+          aria-label="Nome do cliente (texto livre)"
+          onChange={(e) => aoMudar({ cliente: e.target.value })}
+        />
+      )}
+    </label>
   );
 }

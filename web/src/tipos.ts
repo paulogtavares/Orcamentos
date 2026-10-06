@@ -82,6 +82,8 @@ export interface Orcamento {
   status: string;
   validade: string;
   templateId: string | null;
+  /** cliente do cadastro (v2.1.0); ausente quando o orçamento ainda não foi ligado */
+  clienteId?: string | null;
   cambio: number;
   params: ParametrosPreco;
   premissas: string;
@@ -93,6 +95,17 @@ export interface Orcamento {
   resumo: Partial<Resumo>;
 }
 
+export interface Cliente {
+  id: string;
+  nome: string;
+  documento: string | null;
+  situacao: "ativo" | "inativo";
+  origem: "manual" | "cronogramas" | "ligacao";
+  criadoEm?: string;
+  atualizadoEm?: string;
+  orcamentos?: number;
+}
+
 export interface Base {
   meta: { createdAt?: string; seq?: number };
   settings: Parametros;
@@ -100,4 +113,6 @@ export interface Base {
   servicos: Servico[];
   templates: Template[];
   orcamentos: Orcamento[];
+  /** v2.1.0 */
+  clientes?: Cliente[];
 }

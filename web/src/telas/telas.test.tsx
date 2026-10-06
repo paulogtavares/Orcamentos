@@ -12,6 +12,7 @@ import type { Base, Orcamento } from "../tipos";
 import { Editor } from "./Editor";
 import { Lista } from "./Lista";
 import { Proposta } from "./Proposta";
+import { Clientes } from "./Clientes";
 
 const itens = [
   {
@@ -127,6 +128,7 @@ function montar(caminho: string, b: Base, permissoes: string[]) {
               <Route path="/" element={<Lista />} />
               <Route path="/orcamentos/:id" element={<Editor />} />
               <Route path="/orcamentos/:id/proposta" element={<Proposta />} />
+              <Route path="/clientes" element={<Clientes />} />
             </Routes>
           </ProvedorSessao>
         </ProvedorAvisos>
@@ -204,6 +206,54 @@ describe("precificação inválida (v2.0.0)", () => {
       TODAS,
     );
     expect(screen.getByRole("alert").textContent).toMatch(/Margem \+ imposto precisa ser menor que 100%/);
+  });
+});
+
+describe("clientes (v2.1.0)", () => {
+  const ID = "11111111-1111-4111-8111-111111111111";
+  const comClientes = (o: Orcamento, veCustos: boolean): Base => ({
+    ...base(o, veCustos),
+    clientes: [
+      { id: ID, nome: "H Stern", documento: "12345678000190", situacao: "ativo", origem: "cronogramas" },
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        nome: "Antigo",
+        documento: null,
+        situacao: "inativo",
+        origem: "manual",
+      },
+    ],
+  });
+  it("a aba Clientes aparece só para quem vê ou gerencia clientes", () => {
+    const a = montar("/", comClientes(orcCompleto, true), [...TODAS, "orcamentos.clientes.ver"]);
+    expect(a.container.querySelector('a[href="/clientes"]')).toBeTruthy();
+    cleanup();
+    const b = montar("/", comClientes(orcCompleto, true), TODAS);
+    expect(b.container.querySelector('a[href="/clientes"]')).toBeNull();
+  });
+  it("lista ativos com documento formatado; quem gerencia vê o aviso de orçamentos sem ligação", () => {
+    const { container } = montar("/clientes", comClientes(orcCompleto, true), [
+      ...TODAS,
+      "orcamentos.clientes.gerenciar",
+    ]);
+    expect(container.textContent).toContain("12.345.678/0001-90");
+    expect(container.textContent).not.toContain("Antigo"); // inativo fica fora do filtro padrão
+    expect(screen.getByText(/1 orçamento ainda tem o cliente só como texto/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Importar do Cronogramas/ })).toBeTruthy();
+  });
+  it("quem só vê clientes não tem botões de cadastro nem de importação", () => {
+    montar("/clientes", comClientes(orcCompleto, true), [...TODAS, "orcamentos.clientes.ver"]);
+    expect(screen.queryByRole("button", { name: /Novo cliente/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Importar/ })).toBeNull();
+  });
+  it("no editor, um orçamento ligado mostra o cliente do cadastro selecionado e esconde o texto livre", () => {
+    montar("/orcamentos/orc_1", comClientes({ ...orcCompleto, clienteId: ID, cliente: "H Stern" }, true), TODAS);
+    expect((screen.getByLabelText("Cliente do cadastro") as HTMLSelectElement).value).toBe(ID);
+    expect(screen.queryByLabelText("Nome do cliente (texto livre)")).toBeNull();
+    cleanup();
+    montar("/orcamentos/orc_1", comClientes(orcCompleto, true), TODAS);
+    expect((screen.getByLabelText("Cliente do cadastro") as HTMLSelectElement).value).toBe("");
+    expect((screen.getByLabelText("Nome do cliente (texto livre)") as HTMLInputElement).value).toBe("H Stern");
   });
 });
 

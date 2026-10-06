@@ -38,3 +38,16 @@ export const dataHora = (s?: string | null) =>
   s ? `${data(s)}, ${new Date(s).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "—";
 export const simboloMoeda = (m?: string) => (m === "USD" ? "US$" : "R$");
 export const hoje = () => new Date().toISOString().slice(0, 10);
+
+/** CPF (11 dígitos) ou CNPJ (14) formatado; o resto como veio. */
+export function documento(d?: string | null) {
+  if (!d) return "—";
+  if (d.length === 14) return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  if (d.length === 11) return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+  return d;
+}
+export const ORIGEM_CLIENTE: Record<string, string> = {
+  manual: "Cadastro",
+  cronogramas: "Cronogramas",
+  ligacao: "Ligação de orçamentos",
+};

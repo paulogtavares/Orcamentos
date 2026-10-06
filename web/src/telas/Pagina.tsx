@@ -11,6 +11,9 @@ export function Pagina({ acoes, busca, children }: { acoes?: ReactNode; busca?: 
   const veCustos = pode("orcamentos.custos.ver");
   const abas = [
     { para: "/", rotulo: "Orçamentos", n: b.orcamentos.length },
+    ...(pode("orcamentos.clientes.ver") || pode("orcamentos.clientes.gerenciar")
+      ? [{ para: "/clientes", rotulo: "Clientes", n: b.clientes?.length ?? 0 }]
+      : []),
     { para: "/templates", rotulo: "Templates", n: b.templates.length },
     ...(veCustos
       ? [

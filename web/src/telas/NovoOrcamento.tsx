@@ -12,9 +12,11 @@ export function NovoOrcamento({ templateId, aoFechar }: { templateId?: string; a
   const navegar = useNavigate();
   const avisos = useAvisos();
   const temTemplates = b.templates.length > 0;
+  const clientesAtivos = (b.clientes ?? []).filter((c) => c.situacao === "ativo");
   const [d, setD] = useState({
     projeto: "",
     cliente: "",
+    clienteId: "",
     responsavel: "",
     inicio: temTemplates ? "tpl" : "branco",
     templateId: templateId || b.templates[0]?.id || "",
@@ -47,7 +49,31 @@ export function NovoOrcamento({ templateId, aoFechar }: { templateId?: string; a
     <Modal titulo="Novo orçamento" aoFechar={aoFechar} largura={560}>
       {campo("projeto", "Projeto", "Ex.: Lume – Filial")}
       <div className="grade-campos">
-        {campo("cliente", "Cliente", "Ex.: H Stern")}
+        {clientesAtivos.length > 0 ? (
+          <label className="campo">
+            <span className="rotulo-campo">Cliente</span>
+            <select className="entrada" value={d.clienteId} onChange={(e) => setD({ ...d, clienteId: e.target.value })}>
+              <option value="">Fora do cadastro (texto livre)</option>
+              {clientesAtivos.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+            {!d.clienteId && (
+              <input
+                className="entrada"
+                style={{ marginTop: 4 }}
+                placeholder="Ex.: H Stern"
+                value={d.cliente}
+                onChange={(e) => setD({ ...d, cliente: e.target.value })}
+                aria-label="Nome do cliente (texto livre)"
+              />
+            )}
+          </label>
+        ) : (
+          campo("cliente", "Cliente", "Ex.: H Stern")
+        )}
         {campo("responsavel", "Responsável", "Quem monta a proposta")}
       </div>
       <div className="campo">
