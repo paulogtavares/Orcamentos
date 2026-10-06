@@ -2,6 +2,7 @@
   "id": "orcamentos",
   "nome": "Orçamentos",
   "descricao": "Precificação de Projetos, Fullcommerce e Fulfillment",
+  "grupo": "Financeiro",
   "prefixo": "/financeiro/orcamentos",
   "saude": "/api/saude",
   "menu": [

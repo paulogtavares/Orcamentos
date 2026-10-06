@@ -42,6 +42,8 @@ outros módulos consultam).
   normal
 - O backup passa a levar `clientes` e o `clienteId` dos orçamentos; backups da v1.2.1 e da v2.0.0 continuam restauráveis
 - Perfil de teste "Financeiro" com `orcamentos.clientes.gerenciar`
+- Manifesto com `"grupo": "Financeiro"`, para o portal agrupar o menu por área (pedido da coordenação, 06/10/2026)
+- A importação aceita `{ "clientes": [...] }`, o formato de lista usado pela ferramenta `exportar-cronogramas` do portal
 
 ## v2.0.0 · 2026-10-05 · equalização tecnológica
 
